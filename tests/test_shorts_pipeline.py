@@ -28,6 +28,10 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
             def apply(self, project, script, storyboard):
                 return storyboard
 
+        class EditingDirectionAgent:
+            def apply(self, project, script, storyboard):
+                return storyboard
+
         class SafetyReview:
             def review(self, project, storyboard):
                 return type("Review", (), {"status": SafetyStatus.APPROVED, "notes": []})()
@@ -45,7 +49,7 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
             storyboard=StoryboardAgent(),
             visual_asset=VisualAssetAgent(),
             subtitle=SubtitleAgent(),
-            editing_direction=PassthroughAgent(),
+            editing_direction=EditingDirectionAgent(),
             safety_review=SafetyReview(),
         )
 

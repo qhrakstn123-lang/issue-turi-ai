@@ -8,6 +8,7 @@ from backend.src.application.agents.fake_agents import (
     FakeVisualAssetSuggestionAgent,
 )
 from backend.src.application.agents.real.script_writer import RealScriptWriterAgent
+from backend.src.application.agents.real.editing_direction import RealEditingDirectionAgent
 from backend.src.application.agents.real.storyboard import RealStoryboardAgent
 from backend.src.application.agents.real.subtitle import RealSubtitleAgent
 from backend.src.application.agents.real.visual_asset import RealVisualAssetSuggestionAgent
@@ -26,7 +27,7 @@ class LLMCompositionTests(unittest.TestCase):
         self.assertIsInstance(bundle.subtitle, FakeSubtitleAgent)
         self.assertIsInstance(bundle.editing_direction, FakeEditingDirectionAgent)
 
-    def test_openai_provider_uses_real_text_and_visual_asset_agents_only(self):
+    def test_openai_provider_uses_real_content_agents_but_fake_safety(self):
         bundle = create_agent_bundle(
             LLMProviderSettings(provider="openai", openai_api_key="test-key")
         )
@@ -35,7 +36,7 @@ class LLMCompositionTests(unittest.TestCase):
         self.assertIsInstance(bundle.storyboard, RealStoryboardAgent)
         self.assertIsInstance(bundle.subtitle, RealSubtitleAgent)
         self.assertIsInstance(bundle.visual_asset, RealVisualAssetSuggestionAgent)
-        self.assertIsInstance(bundle.editing_direction, FakeEditingDirectionAgent)
+        self.assertIsInstance(bundle.editing_direction, RealEditingDirectionAgent)
 
     def test_real_provider_without_api_key_fails_clearly(self):
         with self.assertRaisesRegex(MissingOpenAIAPIKeyError, "OPENAI_API_KEY"):

@@ -13,7 +13,7 @@ class ShortsGenerationPipeline:
         storyboard = self._agents.storyboard.generate(project, script)
         storyboard = self._agents.visual_asset.apply(project, script, storyboard)
         storyboard = self._agents.subtitle.apply(project, script, storyboard)
-        storyboard = self._agents.editing_direction.apply(storyboard)
+        storyboard = self._agents.editing_direction.apply(project, script, storyboard)
         safety = self._agents.safety_review.review(project, storyboard)
 
         return GenerationResult(

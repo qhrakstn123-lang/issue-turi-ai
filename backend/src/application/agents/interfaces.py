@@ -33,7 +33,7 @@ class SubtitleAgent(Protocol):
 
 
 class EditingDirectionAgent(Protocol):
-    def apply(self, storyboard: Storyboard) -> Storyboard:
+    def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         ...
 
 
