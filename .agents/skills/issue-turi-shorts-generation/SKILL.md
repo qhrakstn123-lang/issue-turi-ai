@@ -44,11 +44,11 @@ Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVID
 ## Reference Channel Rules
 
 Reference channels:
-- 뇌전구
-- 걍석주
+- 뇌전구: https://www.youtube.com/@%EB%87%8C%EC%A0%84%EA%B5%AC
+- 걍석주: https://www.youtube.com/@%EA%B1%8D%EC%84%9D%EC%A3%BC
 
 Operating channel:
-- 이슈털이
+- 이슈털이: https://www.youtube.com/@issueyo
 
 Use reference channels only for general production grammar:
 - hook style
