@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import patch
 
-from main import build_demo_payload
+from main import build_demo_payload, run_smoke_real
 
 
 class MainDemoTests(unittest.TestCase):
@@ -11,6 +12,21 @@ class MainDemoTests(unittest.TestCase):
         self.assertEqual(payload["project"]["status"], "ready_for_review")
         self.assertEqual(len(payload["result"]["storyboard"]["scenes"]), 8)
         self.assertEqual(payload["result"]["storyboard"]["scenes"][0]["scene_purpose"], "hook")
+
+    def test_smoke_real_rejects_fake_provider_without_calling_openai(self):
+        with patch.dict("os.environ", {"ISSUE_TURI_LLM_PROVIDER": "fake"}, clear=True):
+            status = run_smoke_real("topic")
+
+        self.assertEqual(status["ok"], False)
+        self.assertIn("requires ISSUE_TURI_LLM_PROVIDER=openai or real", status["error"])
+
+    def test_smoke_real_reports_missing_api_key_without_printing_secret(self):
+        with patch.dict("os.environ", {"ISSUE_TURI_LLM_PROVIDER": "openai"}, clear=True):
+            status = run_smoke_real("topic")
+
+        self.assertEqual(status["ok"], False)
+        self.assertIn("OPENAI_API_KEY", status["error"])
+        self.assertNotIn("topic", status["error"])
 
 
 if __name__ == "__main__":
