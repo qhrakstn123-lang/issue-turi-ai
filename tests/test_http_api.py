@@ -8,12 +8,36 @@ class NullService:
     pass
 
 
+class RuntimeErrorService:
+    def create_project(self, **kwargs):
+        raise RuntimeError("openai package is not installed")
+
+
 class HttpApiTests(unittest.TestCase):
     def test_http_api_accepts_prebuilt_service(self):
         service = NullService()
         api = IssueTuriApi(service)
 
         self.assertIs(api._service, service)
+
+    def test_runtime_errors_return_clear_json_error(self):
+        api = IssueTuriApi(RuntimeErrorService())
+
+        status, payload = api.handle(
+            "POST",
+            "/api/projects",
+            {
+                "topic": "topic",
+                "target_audience": "audience",
+                "tone": "tone",
+                "style_template_id": "issue_turi_basic",
+                "video_length_seconds": 50,
+                "output_format": "youtube_shorts",
+            },
+        )
+
+        self.assertEqual(status, 500)
+        self.assertEqual(payload["error"], "openai package is not installed")
 
     def test_create_generate_get_and_patch_project(self):
         api = create_api()

@@ -1,40 +1,86 @@
-# 이슈털이 AI 콘텐츠 제작 서비스 MVP
+# Issue Turi AI MVP
 
-이 저장소는 이슈/썰 쇼츠 제작을 위한 AI 편집 지시서 생성기 MVP입니다.
+AI content planning tool for the YouTube channel "이슈털이".
 
-현재 구현된 범위:
+Current scope:
+- Static MVP frontend
+- HTTP JSON API
+- In-memory repository
+- Fake-agent shorts planning pipeline
+- Optional real ScriptWriter wiring for manual OpenAI smoke tests
 
-- 도메인 모델
-- fake agent 기반 쇼츠 생성 파이프라인
-- 프로젝트 생성/저장/수정 서비스
-- 프레임워크 독립 JSON API 어댑터
-- 데모 실행 진입점
-- 계층별 unittest
+## Requirements
 
-## 실행
+- Python 3.12
+- uv
 
-```powershell
-.\.venv\Scripts\python.exe main.py
-```
-
-브라우저 UI와 API 서버:
+Check the active Python version:
 
 ```powershell
-.\.venv\Scripts\python.exe main.py serve 8000
+uv run --project . python --version
 ```
 
-열기: http://127.0.0.1:8000
-
-## 테스트
+## Test
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+uv run --project . --with pytest pytest -q
 ```
 
-## 다음 단계
+Tests must not call real external APIs.
 
-1. HTTP 서버 또는 FastAPI 어댑터 연결
-2. 간단한 프론트엔드 화면 구현
-3. SQLite 저장소 구현
-4. 실제 LLM provider와 prompt loader 연결
-5. TimelineBuilder, TTS, 이미지 생성, 렌더링 MVP 확장
+## Run Fake MVP
+
+Fake mode is the default and does not require an API key.
+
+```powershell
+uv run --project . python -m backend.src.presentation.http.server
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+You can also run the demo payload:
+
+```powershell
+uv run --project . python main.py
+```
+
+## Run Real ScriptWriter Mode
+
+Real mode currently replaces only `ScriptWriterAgent` with `RealScriptWriterAgent`.
+Storyboard, visual suggestions, subtitles, editing directions, and safety review still use fake agents.
+
+Create a local `.env` from `.env.example` and set:
+
+```text
+ISSUE_TURI_LLM_PROVIDER=openai
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=gpt-5
+```
+
+Do not commit `.env`.
+
+Run with the OpenAI SDK supplied by uv:
+
+```powershell
+$env:ISSUE_TURI_LLM_PROVIDER="openai"
+$env:OPENAI_API_KEY="your-key"
+$env:OPENAI_MODEL="gpt-5"
+uv run --project . --with openai python -m backend.src.presentation.http.server
+```
+
+If `OPENAI_API_KEY` is missing, the app raises a clear `OPENAI_API_KEY is required for OpenAILLMClient` error.
+If the OpenAI SDK is missing and real mode calls the client, the app reports that the `openai` package is not installed.
+
+## LLM Provider Modes
+
+- `ISSUE_TURI_LLM_PROVIDER=fake`: default fake pipeline
+- `ISSUE_TURI_LLM_PROVIDER=openai`: real ScriptWriter only, remaining agents fake
+- `ISSUE_TURI_LLM_PROVIDER=real`: same as `openai` for now
+
+## Project Rules
+
+See [AGENTS.md](AGENTS.md) for Codex project instructions, architecture rules, testing rules, and MVP scope.

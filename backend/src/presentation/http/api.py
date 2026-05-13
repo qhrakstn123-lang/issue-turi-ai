@@ -17,6 +17,8 @@ class IssueTuriApi:
             return self._handle(method.upper(), path, body or {})
         except (KeyError, ValueError) as exc:
             return 400, {"error": str(exc)}
+        except RuntimeError as exc:
+            return 500, {"error": str(exc)}
 
     def _handle(self, method: str, path: str, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         if method == "POST" and path == "/api/projects":
