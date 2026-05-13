@@ -28,7 +28,7 @@ class VisualAssetSuggestionAgent(Protocol):
 
 
 class SubtitleAgent(Protocol):
-    def apply(self, storyboard: Storyboard) -> Storyboard:
+    def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         ...
 
 

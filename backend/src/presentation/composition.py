@@ -13,6 +13,7 @@ from backend.src.application.agents.fake_agents import (
 from backend.src.application.agents.interfaces import ShortsAgentBundle
 from backend.src.application.agents.real.script_writer import RealScriptWriterAgent
 from backend.src.application.agents.real.storyboard import RealStoryboardAgent
+from backend.src.application.agents.real.subtitle import RealSubtitleAgent
 from backend.src.application.agents.validation import JsonResponseValidator
 from backend.src.application.pipelines.shorts_generation import ShortsGenerationPipeline
 from backend.src.application.services.project_service import ProjectService
@@ -67,7 +68,14 @@ def create_agent_bundle(settings: LLMProviderSettings) -> ShortsAgentBundle:
             response_validator=JsonResponseValidator(required_fields={"scenes"}),
         ),
         visual_asset=FakeVisualAssetSuggestionAgent(),
-        subtitle=FakeSubtitleAgent(),
+        subtitle=RealSubtitleAgent(
+            llm_client=OpenAILLMClient(
+                api_key=settings.openai_api_key,
+                model=settings.openai_model,
+            ),
+            prompt_loader=FilePromptLoader(PROJECT_ROOT / "prompts"),
+            response_validator=JsonResponseValidator(required_fields={"subtitles"}),
+        ),
         editing_direction=FakeEditingDirectionAgent(),
         safety_review=FakeSafetyReviewAgent(),
     )

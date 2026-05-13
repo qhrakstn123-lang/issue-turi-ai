@@ -140,7 +140,7 @@ class FakeSubtitleAgent:
         ("너는 어떻게 봄?", "댓글로 의견"),
     ]
 
-    def apply(self, storyboard: Storyboard) -> Storyboard:
+    def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         return Storyboard(
             [
                 scene.update(
