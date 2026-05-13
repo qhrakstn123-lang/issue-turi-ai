@@ -20,6 +20,10 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
             def apply(self, storyboard):
                 return storyboard
 
+        class VisualAssetAgent:
+            def apply(self, project, script, storyboard):
+                return storyboard
+
         class SubtitleAgent:
             def apply(self, project, script, storyboard):
                 return storyboard
@@ -39,7 +43,7 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
         bundle = ShortsAgentBundle(
             script_writer=ScriptWriter(),
             storyboard=StoryboardAgent(),
-            visual_asset=PassthroughAgent(),
+            visual_asset=VisualAssetAgent(),
             subtitle=SubtitleAgent(),
             editing_direction=PassthroughAgent(),
             safety_review=SafetyReview(),

@@ -98,7 +98,7 @@ class FakeVisualAssetSuggestionAgent:
         VisualAssetType.BACKGROUND,
     ]
 
-    def apply(self, storyboard: Storyboard) -> Storyboard:
+    def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         scenes = []
         for index, scene in enumerate(storyboard.scenes):
             visual_type = self.TYPES[index % len(self.TYPES)]

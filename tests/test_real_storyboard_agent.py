@@ -140,7 +140,11 @@ class RealStoryboardAgentTests(unittest.TestCase):
             VideoScript("title", "narration", 45, []),
         )
 
-        updated = FakeVisualAssetSuggestionAgent().apply(storyboard)
+        updated = FakeVisualAssetSuggestionAgent().apply(
+            project(),
+            VideoScript("title", "narration", 45, []),
+            storyboard,
+        )
 
         self.assertEqual(len(updated.scenes), 10)
         self.assertEqual(updated.scenes[8].visual_asset_type, updated.scenes[0].visual_asset_type)
