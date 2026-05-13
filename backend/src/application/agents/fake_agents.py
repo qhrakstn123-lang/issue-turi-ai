@@ -101,7 +101,7 @@ class FakeVisualAssetSuggestionAgent:
     def apply(self, storyboard: Storyboard) -> Storyboard:
         scenes = []
         for index, scene in enumerate(storyboard.scenes):
-            visual_type = self.TYPES[index]
+            visual_type = self.TYPES[index % len(self.TYPES)]
             visual_description = self._description(visual_type, scene.scene_purpose)
             scenes.append(
                 scene.update(
@@ -145,8 +145,8 @@ class FakeSubtitleAgent:
             [
                 scene.update(
                     tts_text=scene.narration.replace("있음", "있습니다"),
-                    subtitle=self.SUBTITLES[index][0],
-                    emphasis_caption=self.SUBTITLES[index][1],
+                    subtitle=self.SUBTITLES[index % len(self.SUBTITLES)][0],
+                    emphasis_caption=self.SUBTITLES[index % len(self.SUBTITLES)][1],
                 )
                 for index, scene in enumerate(storyboard.scenes)
             ]
@@ -189,13 +189,13 @@ class FakeEditingDirectionAgent:
         return Storyboard(
             [
                 scene.update(
-                    motion_direction=self.MOTIONS[index],
-                    transition=self.TRANSITIONS[index],
-                    sound_effect_hint=self.CUES[index],
-                    sound_effect_asset=f"sfx/{self.CUES[index]}.wav",
+                    motion_direction=self.MOTIONS[index % len(self.MOTIONS)],
+                    transition=self.TRANSITIONS[index % len(self.TRANSITIONS)],
+                    sound_effect_hint=self.CUES[index % len(self.CUES)],
+                    sound_effect_asset=f"sfx/{self.CUES[index % len(self.CUES)]}.wav",
                     editing_notes=(
                         f"{scene.emphasis_caption} 부분에서 자막 크기를 키우고 "
-                        f"{self.MOTIONS[index]} 모션을 적용한다."
+                        f"{self.MOTIONS[index % len(self.MOTIONS)]} 모션을 적용한다."
                     ),
                 )
                 for index, scene in enumerate(storyboard.scenes)

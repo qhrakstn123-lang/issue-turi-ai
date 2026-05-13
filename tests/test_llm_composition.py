@@ -8,6 +8,7 @@ from backend.src.application.agents.fake_agents import (
     FakeVisualAssetSuggestionAgent,
 )
 from backend.src.application.agents.real.script_writer import RealScriptWriterAgent
+from backend.src.application.agents.real.storyboard import RealStoryboardAgent
 from backend.src.infrastructure.llm.openai_client import MissingOpenAIAPIKeyError
 from backend.src.infrastructure.llm.settings import LLMProviderSettings
 from backend.src.presentation.composition import create_agent_bundle
@@ -23,13 +24,13 @@ class LLMCompositionTests(unittest.TestCase):
         self.assertIsInstance(bundle.subtitle, FakeSubtitleAgent)
         self.assertIsInstance(bundle.editing_direction, FakeEditingDirectionAgent)
 
-    def test_openai_provider_uses_real_script_writer_only(self):
+    def test_openai_provider_uses_real_script_writer_and_storyboard_only(self):
         bundle = create_agent_bundle(
             LLMProviderSettings(provider="openai", openai_api_key="test-key")
         )
 
         self.assertIsInstance(bundle.script_writer, RealScriptWriterAgent)
-        self.assertIsInstance(bundle.storyboard, FakeStoryboardAgent)
+        self.assertIsInstance(bundle.storyboard, RealStoryboardAgent)
         self.assertIsInstance(bundle.visual_asset, FakeVisualAssetSuggestionAgent)
         self.assertIsInstance(bundle.subtitle, FakeSubtitleAgent)
         self.assertIsInstance(bundle.editing_direction, FakeEditingDirectionAgent)

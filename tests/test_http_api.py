@@ -1,5 +1,6 @@
 import unittest
 
+from backend.src.application.agents.validation import LLMResponseValidationError
 from backend.src.presentation.composition import create_api
 from backend.src.presentation.http.api import IssueTuriApi
 
@@ -11,6 +12,11 @@ class NullService:
 class RuntimeErrorService:
     def create_project(self, **kwargs):
         raise RuntimeError("openai package is not installed")
+
+
+class ValidationErrorService:
+    def create_project(self, **kwargs):
+        raise LLMResponseValidationError("estimated_duration must be numeric: abc")
 
 
 class HttpApiTests(unittest.TestCase):
@@ -38,6 +44,25 @@ class HttpApiTests(unittest.TestCase):
 
         self.assertEqual(status, 500)
         self.assertEqual(payload["error"], "openai package is not installed")
+
+    def test_llm_validation_errors_return_clear_json_error(self):
+        api = IssueTuriApi(ValidationErrorService())
+
+        status, payload = api.handle(
+            "POST",
+            "/api/projects",
+            {
+                "topic": "topic",
+                "target_audience": "audience",
+                "tone": "tone",
+                "style_template_id": "issue_turi_basic",
+                "video_length_seconds": 50,
+                "output_format": "youtube_shorts",
+            },
+        )
+
+        self.assertEqual(status, 400)
+        self.assertEqual(payload["error"], "estimated_duration must be numeric: abc")
 
     def test_create_generate_get_and_patch_project(self):
         api = create_api()
