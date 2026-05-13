@@ -1,11 +1,52 @@
 import unittest
 
 from backend.src.application.agents.fake_agents import create_fake_agent_bundle
+from backend.src.application.agents.interfaces import ShortsAgentBundle
 from backend.src.application.pipelines.shorts_generation import ShortsGenerationPipeline
-from backend.src.domain.models import ContentProject, OutputFormat, SafetyStatus
+from backend.src.domain.models import ContentProject, OutputFormat, SafetyStatus, Storyboard, VideoScript
 
 
 class ShortsGenerationPipelineTests(unittest.TestCase):
+    def test_pipeline_depends_on_general_agent_bundle(self):
+        class ScriptWriter:
+            def generate(self, project):
+                return VideoScript("title", "narration", project.video_length_seconds, [])
+
+        class StoryboardAgent:
+            def generate(self, project, script):
+                return Storyboard([])
+
+        class PassthroughAgent:
+            def apply(self, storyboard):
+                return storyboard
+
+        class SafetyReview:
+            def review(self, project, storyboard):
+                return type("Review", (), {"status": SafetyStatus.APPROVED, "notes": []})()
+
+        project = ContentProject.create(
+            topic="topic",
+            target_audience="audience",
+            tone="tone",
+            style_template_id="issue_turi_basic",
+            video_length_seconds=45,
+            output_format=OutputFormat.YOUTUBE_SHORTS,
+        )
+        bundle = ShortsAgentBundle(
+            script_writer=ScriptWriter(),
+            storyboard=StoryboardAgent(),
+            visual_asset=PassthroughAgent(),
+            subtitle=PassthroughAgent(),
+            editing_direction=PassthroughAgent(),
+            safety_review=SafetyReview(),
+        )
+
+        result = ShortsGenerationPipeline(bundle).generate(project)
+
+        self.assertEqual(result.project_id, project.project_id)
+        self.assertEqual(result.safety_status, SafetyStatus.APPROVED)
+        self.assertEqual(result.storyboard.scenes, [])
+
     def test_pipeline_generates_deterministic_scene_editing_plan(self):
         project = ContentProject.create(
             topic="요즘 커뮤니티에서 논란이 된 카페 주문 사건",

@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
+from backend.src.application.agents.interfaces import SafetyReview, ShortsAgentBundle
 from backend.src.domain.models import (
     ContentProject,
+    MotionDirection,
     SafetyStatus,
     Scene,
+    SoundEffectHint,
     Storyboard,
+    Transition,
+    VisualAssetType,
     VideoScript,
 )
-
-
-@dataclass(frozen=True)
-class SafetyReview:
-    status: SafetyStatus
-    notes: list[str]
 
 
 class FakeScriptWriterAgent:
@@ -51,22 +48,23 @@ class FakeStoryboardAgent:
         duration = min(5.0, max(2.0, round(project.video_length_seconds / 10, 1)))
         scenes: list[Scene] = []
         for index, purpose in enumerate(self.PURPOSES, start=1):
+            narration = self._narration_for(project.topic, purpose)
             scenes.append(
                 Scene(
                     scene_id=f"scene_{index:03d}",
                     scene_purpose=purpose,
-                    narration=self._narration_for(project.topic, purpose),
-                    tts_text=self._narration_for(project.topic, purpose),
+                    narration=narration,
+                    tts_text=narration,
                     subtitle="",
                     emphasis_caption="",
-                    visual_asset_type="image",
+                    visual_asset_type=VisualAssetType.IMAGE,
                     visual_description="",
                     generated_image_prompt="",
                     gif_or_clip_suggestion="none",
                     stock_search_keywords=[],
-                    motion_direction="zoom_in",
-                    transition="quick_cut",
-                    sound_effect_hint="pop",
+                    motion_direction=MotionDirection.ZOOM_IN,
+                    transition=Transition.QUICK_CUT,
+                    sound_effect_hint=SoundEffectHint.POP,
                     estimated_duration=duration,
                     editing_notes="",
                     copyright_safety_note="",
@@ -89,51 +87,45 @@ class FakeStoryboardAgent:
 
 
 class FakeVisualAssetSuggestionAgent:
-    TYPES = ["image", "text_only", "image", "icon", "background", "image", "text_only", "background"]
+    TYPES = [
+        VisualAssetType.IMAGE,
+        VisualAssetType.TEXT_ONLY,
+        VisualAssetType.IMAGE,
+        VisualAssetType.ICON,
+        VisualAssetType.BACKGROUND,
+        VisualAssetType.IMAGE,
+        VisualAssetType.TEXT_ONLY,
+        VisualAssetType.BACKGROUND,
+    ]
 
     def apply(self, storyboard: Storyboard) -> Storyboard:
         scenes = []
         for index, scene in enumerate(storyboard.scenes):
             visual_type = self.TYPES[index]
+            visual_description = self._description(visual_type, scene.scene_purpose)
             scenes.append(
                 scene.update(
                     visual_asset_type=visual_type,
-                    visual_description=self._description(visual_type, scene.scene_purpose),
+                    visual_description=visual_description,
+                    generated_image_prompt=(
+                        f"Vertical 9:16 Korean issue explainer background, {visual_description}, "
+                        "clean composition, no real logos, no copyrighted characters"
+                    ),
                     gif_or_clip_suggestion="라이선스 확인된 짧은 반응 GIF 후보",
                     stock_search_keywords=["korean issue", scene.scene_purpose, "vertical shorts"],
+                    copyright_safety_note="직접 생성 이미지 또는 라이선스 확인 스톡만 사용한다.",
                 )
             )
         return Storyboard(scenes)
 
-    def _description(self, visual_type: str, purpose: str) -> str:
-        if visual_type == "text_only":
+    def _description(self, visual_type: VisualAssetType, purpose: str) -> str:
+        if visual_type == VisualAssetType.TEXT_ONLY:
             return "강한 배경색 위에 큰 한 줄 자막"
-        if visual_type == "icon":
+        if visual_type == VisualAssetType.ICON:
             return "의견이 갈리는 느낌의 아이콘과 도형 화면"
-        if visual_type == "background":
+        if visual_type == VisualAssetType.BACKGROUND:
             return "어두운 그라데이션 배경과 큰 강조 자막"
         return f"{purpose} 장면용 스마트폰/커뮤니티 분위기 이미지"
-
-
-class FakeVisualPromptAgent:
-    def apply(self, storyboard: Storyboard) -> Storyboard:
-        return Storyboard(
-            [
-                scene.update(
-                    generated_image_prompt=(
-                        f"Vertical 9:16 Korean issue explainer background, {scene.visual_description}, "
-                        "clean composition, no real logos, no copyrighted characters"
-                    ),
-                    copyright_safety_note="직접 생성 이미지 또는 라이선스 확인 스톡만 사용한다.",
-                )
-                for scene in storyboard.scenes
-            ]
-        )
-
-
-class FakeTTSScriptAgent:
-    def apply(self, storyboard: Storyboard) -> Storyboard:
-        return Storyboard([scene.update(tts_text=scene.narration.replace("있음", "있습니다")) for scene in storyboard.scenes])
 
 
 class FakeSubtitleAgent:
@@ -151,15 +143,47 @@ class FakeSubtitleAgent:
     def apply(self, storyboard: Storyboard) -> Storyboard:
         return Storyboard(
             [
-                scene.update(subtitle=self.SUBTITLES[index][0], emphasis_caption=self.SUBTITLES[index][1])
+                scene.update(
+                    tts_text=scene.narration.replace("있음", "있습니다"),
+                    subtitle=self.SUBTITLES[index][0],
+                    emphasis_caption=self.SUBTITLES[index][1],
+                )
                 for index, scene in enumerate(storyboard.scenes)
             ]
         )
 
 
 class FakeEditingDirectionAgent:
-    MOTIONS = ["zoom_in", "pan_left", "shake", "text_pop", "pan_right", "zoom_in", "fade_in", "text_pop"]
-    TRANSITIONS = ["quick_cut", "quick_cut", "swipe", "zoom_cut", "quick_cut", "glitch", "fade", "quick_cut"]
+    MOTIONS = [
+        MotionDirection.ZOOM_IN,
+        MotionDirection.PAN_LEFT,
+        MotionDirection.SHAKE,
+        MotionDirection.TEXT_POP,
+        MotionDirection.PAN_RIGHT,
+        MotionDirection.ZOOM_IN,
+        MotionDirection.FADE_IN,
+        MotionDirection.TEXT_POP,
+    ]
+    TRANSITIONS = [
+        Transition.QUICK_CUT,
+        Transition.QUICK_CUT,
+        Transition.SWIPE,
+        Transition.ZOOM_CUT,
+        Transition.QUICK_CUT,
+        Transition.GLITCH,
+        Transition.FADE,
+        Transition.QUICK_CUT,
+    ]
+    CUES = [
+        SoundEffectHint.POP,
+        SoundEffectHint.WHOOSH,
+        SoundEffectHint.CLICK,
+        SoundEffectHint.IMPACT,
+        SoundEffectHint.CLICK,
+        SoundEffectHint.SUSPENSE_RISE,
+        SoundEffectHint.HIT,
+        SoundEffectHint.POP,
+    ]
 
     def apply(self, storyboard: Storyboard) -> Storyboard:
         return Storyboard(
@@ -167,6 +191,8 @@ class FakeEditingDirectionAgent:
                 scene.update(
                     motion_direction=self.MOTIONS[index],
                     transition=self.TRANSITIONS[index],
+                    sound_effect_hint=self.CUES[index],
+                    sound_effect_asset=f"sfx/{self.CUES[index]}.wav",
                     editing_notes=(
                         f"{scene.emphasis_caption} 부분에서 자막 크기를 키우고 "
                         f"{self.MOTIONS[index]} 모션을 적용한다."
@@ -177,20 +203,8 @@ class FakeEditingDirectionAgent:
         )
 
 
-class FakeSoundCueAgent:
-    CUES = ["pop", "whoosh", "click", "impact", "click", "suspense_rise", "hit", "pop"]
-
-    def apply(self, storyboard: Storyboard) -> Storyboard:
-        return Storyboard(
-            [
-                scene.update(sound_effect_hint=self.CUES[index], sound_effect_asset=f"sfx/{self.CUES[index]}.wav")
-                for index, scene in enumerate(storyboard.scenes)
-            ]
-        )
-
-
 class FakeSafetyReviewAgent:
-    RISK_WORDS = ("루머", "비난", "확인 안 된", "저격", "허위")
+    RISK_WORDS = ("루머", "비난", "확인 안 된", "저격", "허위", "猷⑤㉧", "鍮꾨궃")
 
     def review(self, project: ContentProject, storyboard: Storyboard) -> SafetyReview:
         if any(word in project.topic or word in project.tone for word in self.RISK_WORDS):
@@ -201,28 +215,12 @@ class FakeSafetyReviewAgent:
         return SafetyReview(SafetyStatus.APPROVED, ["저작권과 루머 위험이 낮은 편집 지시서입니다."])
 
 
-@dataclass(frozen=True)
-class FakeAgentBundle:
-    script_writer: FakeScriptWriterAgent
-    storyboard: FakeStoryboardAgent
-    visual_asset: FakeVisualAssetSuggestionAgent
-    visual_prompt: FakeVisualPromptAgent
-    tts_script: FakeTTSScriptAgent
-    subtitle: FakeSubtitleAgent
-    editing_direction: FakeEditingDirectionAgent
-    sound_cue: FakeSoundCueAgent
-    safety_review: FakeSafetyReviewAgent
-
-
-def create_fake_agent_bundle() -> FakeAgentBundle:
-    return FakeAgentBundle(
+def create_fake_agent_bundle() -> ShortsAgentBundle:
+    return ShortsAgentBundle(
         script_writer=FakeScriptWriterAgent(),
         storyboard=FakeStoryboardAgent(),
         visual_asset=FakeVisualAssetSuggestionAgent(),
-        visual_prompt=FakeVisualPromptAgent(),
-        tts_script=FakeTTSScriptAgent(),
         subtitle=FakeSubtitleAgent(),
         editing_direction=FakeEditingDirectionAgent(),
-        sound_cue=FakeSoundCueAgent(),
         safety_review=FakeSafetyReviewAgent(),
     )

@@ -26,6 +26,48 @@ class SafetyStatus(StrEnum):
     REVIEW_REQUIRED = "review_required"
 
 
+class VisualAssetType(StrEnum):
+    IMAGE = "image"
+    GIF = "gif"
+    SHORT_CLIP = "short_clip"
+    TEXT_ONLY = "text_only"
+    ICON = "icon"
+    BACKGROUND = "background"
+
+
+class MotionDirection(StrEnum):
+    ZOOM_IN = "zoom_in"
+    PAN_LEFT = "pan_left"
+    SHAKE = "shake"
+    TEXT_POP = "text_pop"
+    PAN_RIGHT = "pan_right"
+    FADE_IN = "fade_in"
+
+
+class Transition(StrEnum):
+    QUICK_CUT = "quick_cut"
+    SWIPE = "swipe"
+    ZOOM_CUT = "zoom_cut"
+    GLITCH = "glitch"
+    FADE = "fade"
+
+
+class SoundEffectHint(StrEnum):
+    POP = "pop"
+    WHOOSH = "whoosh"
+    CLICK = "click"
+    IMPACT = "impact"
+    SUSPENSE_RISE = "suspense_rise"
+    HIT = "hit"
+
+
+def _coerce_allowed_value(enum_type: type[StrEnum], value: StrEnum | str, field_name: str) -> StrEnum:
+    try:
+        return enum_type(value)
+    except ValueError as exc:
+        raise ValueError(f"unsupported {field_name}") from exc
+
+
 @dataclass(frozen=True)
 class ContentProject:
     project_id: str
@@ -89,14 +131,14 @@ class Scene:
     tts_text: str
     subtitle: str
     emphasis_caption: str
-    visual_asset_type: str
+    visual_asset_type: VisualAssetType
     visual_description: str
     generated_image_prompt: str
     gif_or_clip_suggestion: str
     stock_search_keywords: list[str]
-    motion_direction: str
-    transition: str
-    sound_effect_hint: str
+    motion_direction: MotionDirection
+    transition: Transition
+    sound_effect_hint: SoundEffectHint
     estimated_duration: float
     editing_notes: str
     copyright_safety_note: str
@@ -107,8 +149,26 @@ class Scene:
     def __post_init__(self) -> None:
         if not 2.0 <= self.estimated_duration <= 5.0:
             raise ValueError("estimated_duration must be between 2 and 5 seconds")
-        if self.visual_asset_type not in {"image", "gif", "short_clip", "text_only", "icon", "background"}:
-            raise ValueError("unsupported visual_asset_type")
+        object.__setattr__(
+            self,
+            "visual_asset_type",
+            _coerce_allowed_value(VisualAssetType, self.visual_asset_type, "visual_asset_type"),
+        )
+        object.__setattr__(
+            self,
+            "motion_direction",
+            _coerce_allowed_value(MotionDirection, self.motion_direction, "motion_direction"),
+        )
+        object.__setattr__(
+            self,
+            "transition",
+            _coerce_allowed_value(Transition, self.transition, "transition"),
+        )
+        object.__setattr__(
+            self,
+            "sound_effect_hint",
+            _coerce_allowed_value(SoundEffectHint, self.sound_effect_hint, "sound_effect_hint"),
+        )
 
     @classmethod
     def minimal(cls, scene_id: str, estimated_duration: float) -> Scene:

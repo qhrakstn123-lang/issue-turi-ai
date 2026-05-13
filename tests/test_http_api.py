@@ -1,9 +1,20 @@
 import unittest
 
-from backend.src.presentation.http.api import create_api
+from backend.src.presentation.composition import create_api
+from backend.src.presentation.http.api import IssueTuriApi
+
+
+class NullService:
+    pass
 
 
 class HttpApiTests(unittest.TestCase):
+    def test_http_api_accepts_prebuilt_service(self):
+        service = NullService()
+        api = IssueTuriApi(service)
+
+        self.assertIs(api._service, service)
+
     def test_create_generate_get_and_patch_project(self):
         api = create_api()
 

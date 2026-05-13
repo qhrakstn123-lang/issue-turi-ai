@@ -2,10 +2,14 @@ import unittest
 
 from backend.src.domain.models import (
     ContentProject,
+    MotionDirection,
     OutputFormat,
     ProjectStatus,
     Scene,
+    SoundEffectHint,
     Timeline,
+    Transition,
+    VisualAssetType,
 )
 
 
@@ -44,6 +48,20 @@ class DomainModelTests(unittest.TestCase):
                 estimated_duration=1.0,
                 editing_notes="자막을 크게 등장",
                 copyright_safety_note="직접 생성 이미지 사용",
+            )
+
+    def test_scene_normalizes_allowed_string_values_to_enums(self):
+        scene = Scene.minimal(scene_id="scene_001", estimated_duration=3.0)
+
+        self.assertEqual(scene.visual_asset_type, VisualAssetType.IMAGE)
+        self.assertEqual(scene.motion_direction, MotionDirection.ZOOM_IN)
+        self.assertEqual(scene.transition, Transition.QUICK_CUT)
+        self.assertEqual(scene.sound_effect_hint, SoundEffectHint.POP)
+
+    def test_scene_rejects_unsupported_allowed_values(self):
+        with self.assertRaises(ValueError):
+            Scene.minimal(scene_id="scene_001", estimated_duration=3.0).update(
+                visual_asset_type="unsupported"
             )
 
     def test_timeline_uses_scene_durations_in_order(self):

@@ -2,8 +2,8 @@ import json
 import sys
 from typing import Any
 
+from backend.src.presentation.composition import create_api
 from backend.src.presentation.http.server import create_server
-from backend.src.presentation.http.api import create_api
 
 
 def build_demo_payload(topic: str) -> dict[str, Any]:

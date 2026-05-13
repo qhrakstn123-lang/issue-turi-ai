@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from backend.src.presentation.http.api import IssueTuriApi, create_api
+from backend.src.presentation.composition import create_api
+from backend.src.presentation.http.api import IssueTuriApi
 
 
 FRONTEND_ROOT = Path(__file__).resolve().parents[4] / "frontend" / "app"

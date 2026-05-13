@@ -4,11 +4,8 @@ from dataclasses import fields, is_dataclass
 from enum import Enum
 from typing import Any
 
-from backend.src.application.agents.fake_agents import create_fake_agent_bundle
-from backend.src.application.pipelines.shorts_generation import ShortsGenerationPipeline
 from backend.src.application.services.project_service import ProjectService
 from backend.src.domain.models import OutputFormat
-from backend.src.infrastructure.database.memory_repository import InMemoryProjectRepository
 
 
 class IssueTuriApi:
@@ -50,14 +47,6 @@ class IssueTuriApi:
                 return 200, {"project": to_json(project)}
 
         return 404, {"error": f"route not found: {method} {path}"}
-
-
-def create_api() -> IssueTuriApi:
-    service = ProjectService(
-        repository=InMemoryProjectRepository(),
-        shorts_pipeline=ShortsGenerationPipeline(create_fake_agent_bundle()),
-    )
-    return IssueTuriApi(service)
 
 
 def to_json(value: Any) -> Any:
