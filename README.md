@@ -56,9 +56,9 @@ Real mode currently uses real LLM agents for:
 - `RealSubtitleAgent`
 - `RealVisualAssetSuggestionAgent` with per-scene visual sourcing strategy fields
 - `RealEditingDirectionAgent`
+- `RealSafetyReviewAgent`
 
-Safety review is still fake:
-- `FakeSafetyReviewAgent`
+`RealSafetyReviewAgent` is not a legal judge. It structures safety, rights, rumor, defamation, privacy, portrait-rights, and source-usage risk flags so a human can make the final review decision.
 
 Create a local `.env` from `.env.example` or set PowerShell environment variables:
 
@@ -109,7 +109,7 @@ The smoke command includes the exception type, message, and a short hint for JSO
 ## Provider Modes
 
 - `ISSUE_TURI_LLM_PROVIDER=fake`: default fake pipeline
-- `ISSUE_TURI_LLM_PROVIDER=openai`: real mixed pipeline with fake safety review
+- `ISSUE_TURI_LLM_PROVIDER=openai`: real mixed pipeline
 - `ISSUE_TURI_LLM_PROVIDER=real`: same as `openai` for now
 
 ## Project Rules

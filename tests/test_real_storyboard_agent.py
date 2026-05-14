@@ -151,8 +151,21 @@ class RealStoryboardAgentTests(unittest.TestCase):
 
     def test_mixed_real_storyboard_pipeline_survives_long_storyboard_with_fake_followups(self):
         class SafetyReviewAgent:
-            def review(self, project, storyboard):
-                return type("Review", (), {"status": SafetyStatus.APPROVED, "notes": []})()
+            def review(self, project, script, storyboard):
+                return type(
+                    "Review",
+                    (),
+                    {
+                        "status": SafetyStatus.APPROVED,
+                        "notes": [],
+                        "copyright_risks": [],
+                        "rumor_or_defamation_risks": [],
+                        "privacy_or_portrait_risks": [],
+                        "source_usage_risks": [],
+                        "required_human_review": False,
+                        "recommended_revisions": [],
+                    },
+                )()
 
         scenes = [scene_json(scene_id=f"scene_{index:03d}") for index in range(1, 11)]
         with tempfile.TemporaryDirectory() as directory:

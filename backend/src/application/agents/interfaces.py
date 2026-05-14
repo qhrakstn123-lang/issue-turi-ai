@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from backend.src.domain.models import ContentProject, SafetyStatus, Storyboard, VideoScript
@@ -10,6 +10,12 @@ from backend.src.domain.models import ContentProject, SafetyStatus, Storyboard, 
 class SafetyReview:
     status: SafetyStatus
     notes: list[str]
+    copyright_risks: list[str] = field(default_factory=list)
+    rumor_or_defamation_risks: list[str] = field(default_factory=list)
+    privacy_or_portrait_risks: list[str] = field(default_factory=list)
+    source_usage_risks: list[str] = field(default_factory=list)
+    required_human_review: bool = False
+    recommended_revisions: list[str] = field(default_factory=list)
 
 
 class ScriptWriterAgent(Protocol):
@@ -38,7 +44,7 @@ class EditingDirectionAgent(Protocol):
 
 
 class SafetyReviewAgent(Protocol):
-    def review(self, project: ContentProject, storyboard: Storyboard) -> SafetyReview:
+    def review(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> SafetyReview:
         ...
 
 

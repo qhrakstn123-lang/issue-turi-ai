@@ -11,10 +11,9 @@ Default mode is the fake MVP pipeline.
 3. `RealSubtitleAgent`
 4. `RealVisualAssetSuggestionAgent`
 5. `RealEditingDirectionAgent`
-6. `FakeSafetyReviewAgent`
+6. `RealSafetyReviewAgent`
 
 Not implemented yet:
-- `RealSafetyReviewAgent`
 - image generation
 - TTS
 - MP4 rendering
@@ -71,7 +70,8 @@ Do not print, commit, or hard-code API keys.
 - `RealSubtitleAgent`: updates only `subtitle` and `emphasis_caption`.
 - `RealVisualAssetSuggestionAgent`: updates only `visual_asset_type`, `visual_description`, `generated_image_prompt`, `gif_or_clip_suggestion`, `stock_search_keywords`, `visual_source_strategy`, `capture_source_type`, `capture_usage_mode`, and `asset_usage_note`.
 - `RealEditingDirectionAgent`: updates only `motion_direction`, `transition`, `sound_effect_hint`, and `editing_notes`.
-- `FakeSafetyReviewAgent`: currently provides safety status and notes.
+- `RealSafetyReviewAgent`: does not modify scenes. It writes only safety fields on `GenerationResult`: `safety_status`, `safety_notes`, `copyright_risks`, `rumor_or_defamation_risks`, `privacy_or_portrait_risks`, `source_usage_risks`, `required_human_review`, and `recommended_revisions`.
+- Safety review is not a legal judgment. It structures safety, rights, rumor, defamation, privacy, portrait-rights, and source-usage risk flags so a human can make the final review decision.
 
 ## Existing Safety Nets
 
@@ -83,6 +83,7 @@ Important tests:
 - `tests/test_real_subtitle_agent.py`
 - `tests/test_real_visual_asset_agent.py`
 - `tests/test_real_editing_direction_agent.py`
+- `tests/test_real_safety_review_agent.py`
 - `tests/test_llm_composition.py`
 - `tests/conftest.py`
 
@@ -90,7 +91,7 @@ Important tests:
 
 ## Visual Sourcing Strategy
 
-Before adding `RealSafetyReviewAgent`, `RealVisualAssetSuggestionAgent` has been expanded from a simple AI image prompt agent into a per-scene visual sourcing strategy recommender.
+`RealVisualAssetSuggestionAgent` has been expanded from a simple AI image prompt agent into a per-scene visual sourcing strategy recommender. `RealSafetyReviewAgent` reviews those sourcing fields and flags risks for human review.
 
 Required fields:
 

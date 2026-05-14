@@ -14,7 +14,7 @@ class ShortsGenerationPipeline:
         storyboard = self._agents.visual_asset.apply(project, script, storyboard)
         storyboard = self._agents.subtitle.apply(project, script, storyboard)
         storyboard = self._agents.editing_direction.apply(project, script, storyboard)
-        safety = self._agents.safety_review.review(project, storyboard)
+        safety = self._agents.safety_review.review(project, script, storyboard)
 
         return GenerationResult(
             project_id=project.project_id,
@@ -22,4 +22,10 @@ class ShortsGenerationPipeline:
             storyboard=storyboard,
             safety_status=safety.status,
             safety_notes=safety.notes,
+            copyright_risks=safety.copyright_risks,
+            rumor_or_defamation_risks=safety.rumor_or_defamation_risks,
+            privacy_or_portrait_risks=safety.privacy_or_portrait_risks,
+            source_usage_risks=safety.source_usage_risks,
+            required_human_review=safety.required_human_review,
+            recommended_revisions=safety.recommended_revisions,
         )

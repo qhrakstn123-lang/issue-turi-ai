@@ -23,7 +23,9 @@ class ProjectStatus(StrEnum):
 
 class SafetyStatus(StrEnum):
     APPROVED = "approved"
-    REVIEW_REQUIRED = "review_required"
+    NEEDS_REVIEW = "needs_review"
+    REJECTED = "rejected"
+    REVIEW_REQUIRED = "needs_review"
 
 
 class VisualAssetType(StrEnum):
@@ -141,7 +143,7 @@ class ContentProject:
     def with_generation_result(self, result: GenerationResult) -> ContentProject:
         next_status = (
             ProjectStatus.REVIEW_REQUIRED
-            if result.safety_status == SafetyStatus.REVIEW_REQUIRED
+            if result.safety_status != SafetyStatus.APPROVED
             else ProjectStatus.READY_FOR_REVIEW
         )
         return replace(self, status=next_status, generation_result=result)
@@ -265,6 +267,12 @@ class GenerationResult:
     storyboard: Storyboard
     safety_status: SafetyStatus
     safety_notes: list[str]
+    copyright_risks: list[str] = field(default_factory=list)
+    rumor_or_defamation_risks: list[str] = field(default_factory=list)
+    privacy_or_portrait_risks: list[str] = field(default_factory=list)
+    source_usage_risks: list[str] = field(default_factory=list)
+    required_human_review: bool = False
+    recommended_revisions: list[str] = field(default_factory=list)
 
     def update_scene(self, scene_id: str, **changes: Any) -> GenerationResult:
         updated_scenes = [

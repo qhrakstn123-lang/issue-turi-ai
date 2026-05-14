@@ -33,8 +33,21 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
                 return storyboard
 
         class SafetyReview:
-            def review(self, project, storyboard):
-                return type("Review", (), {"status": SafetyStatus.APPROVED, "notes": []})()
+            def review(self, project, script, storyboard):
+                return type(
+                    "Review",
+                    (),
+                    {
+                        "status": SafetyStatus.APPROVED,
+                        "notes": [],
+                        "copyright_risks": [],
+                        "rumor_or_defamation_risks": [],
+                        "privacy_or_portrait_risks": [],
+                        "source_usage_risks": [],
+                        "required_human_review": False,
+                        "recommended_revisions": [],
+                    },
+                )()
 
         project = ContentProject.create(
             topic="topic",

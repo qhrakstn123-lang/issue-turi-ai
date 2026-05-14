@@ -4,7 +4,6 @@ from pathlib import Path
 
 from backend.src.application.agents.fake_agents import (
     FakeEditingDirectionAgent,
-    FakeSafetyReviewAgent,
     FakeStoryboardAgent,
     FakeSubtitleAgent,
     FakeVisualAssetSuggestionAgent,
@@ -13,6 +12,7 @@ from backend.src.application.agents.fake_agents import (
 from backend.src.application.agents.interfaces import ShortsAgentBundle
 from backend.src.application.agents.real.editing_direction import RealEditingDirectionAgent
 from backend.src.application.agents.real.script_writer import RealScriptWriterAgent
+from backend.src.application.agents.real.safety_review import RealSafetyReviewAgent
 from backend.src.application.agents.real.storyboard import RealStoryboardAgent
 from backend.src.application.agents.real.subtitle import RealSubtitleAgent
 from backend.src.application.agents.real.visual_asset import RealVisualAssetSuggestionAgent
@@ -93,5 +93,24 @@ def create_agent_bundle(settings: LLMProviderSettings) -> ShortsAgentBundle:
             prompt_loader=FilePromptLoader(PROJECT_ROOT / "prompts"),
             response_validator=JsonResponseValidator(required_fields={"editing_directions"}),
         ),
-        safety_review=FakeSafetyReviewAgent(),
+        safety_review=RealSafetyReviewAgent(
+            llm_client=OpenAILLMClient(
+                api_key=settings.openai_api_key,
+                model=settings.openai_model,
+            ),
+            prompt_loader=FilePromptLoader(PROJECT_ROOT / "prompts"),
+            response_validator=JsonResponseValidator(
+                required_fields={
+                    "safety_status",
+                    "safety_notes",
+                    "copyright_risks",
+                    "rumor_or_defamation_risks",
+                    "privacy_or_portrait_risks",
+                    "source_usage_risks",
+                    "required_human_review",
+                    "recommended_revisions",
+                },
+                enum_fields={"safety_status": {"approved", "needs_review", "rejected"}},
+            ),
+        ),
     )

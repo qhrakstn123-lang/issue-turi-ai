@@ -3,10 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from backend.src.application.agents.fake_agents import FakeSafetyReviewAgent
 from backend.src.application.agents.interfaces import ShortsAgentBundle
 from backend.src.application.agents.real.editing_direction import RealEditingDirectionAgent
 from backend.src.application.agents.real.script_writer import RealScriptWriterAgent
+from backend.src.application.agents.real.safety_review import RealSafetyReviewAgent
 from backend.src.application.agents.real.storyboard import RealStoryboardAgent
 from backend.src.application.agents.real.subtitle import RealSubtitleAgent
 from backend.src.application.agents.real.visual_asset import RealVisualAssetSuggestionAgent
@@ -86,6 +86,16 @@ class RealMixedPipelineContractTests(unittest.TestCase):
             }
             for index, scene in enumerate(scenes, start=1)
         ]
+        safety_payload = {
+            "safety_status": "needs_review",
+            "safety_notes": ["Human review is needed for mockup sourcing before publishing."],
+            "copyright_risks": ["Do not copy real thumbnails or captions."],
+            "rumor_or_defamation_risks": [],
+            "privacy_or_portrait_risks": ["Avoid real usernames and profile images."],
+            "source_usage_risks": ["Use mockups instead of direct YouTube captures."],
+            "required_human_review": True,
+            "recommended_revisions": ["Replace all reference captures with self-made mockups."],
+        }
 
         with tempfile.TemporaryDirectory() as directory:
             bundle = self._bundle(
@@ -100,11 +110,17 @@ class RealMixedPipelineContractTests(unittest.TestCase):
                 subtitle_payload={"subtitles": subtitles},
                 visual_payload={"visuals": visuals},
                 editing_payload={"editing_directions": editing_directions},
+                safety_payload=safety_payload,
             )
 
             result = ShortsGenerationPipeline(bundle).generate(project())
 
-        self.assertEqual(result.safety_status, SafetyStatus.APPROVED)
+        self.assertEqual(result.safety_status, SafetyStatus.NEEDS_REVIEW)
+        self.assertTrue(result.required_human_review)
+        self.assertEqual(result.copyright_risks, ["Do not copy real thumbnails or captions."])
+        self.assertEqual(result.privacy_or_portrait_risks, ["Avoid real usernames and profile images."])
+        self.assertEqual(result.source_usage_risks, ["Use mockups instead of direct YouTube captures."])
+        self.assertEqual(result.recommended_revisions, ["Replace all reference captures with self-made mockups."])
         self.assertEqual(result.video_script.title, "AI shorts automation")
         self.assertEqual(len(result.storyboard.scenes), 10)
 
@@ -165,9 +181,12 @@ class RealMixedPipelineContractTests(unittest.TestCase):
         subtitle_payload: dict,
         visual_payload: dict,
         editing_payload: dict,
+        safety_payload: dict,
     ) -> ShortsAgentBundle:
         shorts = prompt_root / "shorts"
         shorts.mkdir()
+        safety = prompt_root / "safety"
+        safety.mkdir()
         for prompt_name in [
             "script_writer",
             "storyboard",
@@ -176,6 +195,7 @@ class RealMixedPipelineContractTests(unittest.TestCase):
             "editing_direction",
         ]:
             (shorts / f"{prompt_name}.md").write_text(f"# {prompt_name}\nJSON only.", encoding="utf-8")
+        (safety / "review.md").write_text("# safety review\nJSON only.", encoding="utf-8")
 
         prompt_loader = FilePromptLoader(prompt_root)
         return ShortsAgentBundle(
@@ -206,7 +226,23 @@ class RealMixedPipelineContractTests(unittest.TestCase):
                 prompt_loader=prompt_loader,
                 response_validator=JsonResponseValidator(required_fields={"editing_directions"}),
             ),
-            safety_review=FakeSafetyReviewAgent(),
+            safety_review=RealSafetyReviewAgent(
+                llm_client=FakeLLMClient([json.dumps(safety_payload, ensure_ascii=False)]),
+                prompt_loader=prompt_loader,
+                response_validator=JsonResponseValidator(
+                    required_fields={
+                        "safety_status",
+                        "safety_notes",
+                        "copyright_risks",
+                        "rumor_or_defamation_risks",
+                        "privacy_or_portrait_risks",
+                        "source_usage_risks",
+                        "required_human_review",
+                        "recommended_revisions",
+                    },
+                    enum_fields={"safety_status": {"approved", "needs_review", "rejected"}},
+                ),
+            ),
         )
 
 

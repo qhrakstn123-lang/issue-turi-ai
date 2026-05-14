@@ -16,7 +16,7 @@ The current real mixed pipeline order is fixed:
 3. `RealSubtitleAgent`
 4. `RealVisualAssetSuggestionAgent`
 5. `RealEditingDirectionAgent`
-6. `FakeSafetyReviewAgent`
+6. `RealSafetyReviewAgent`
 
 Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVIDER` is `openai` or `real`.
 
@@ -27,7 +27,7 @@ Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVID
 - `Subtitle`: update only `subtitle` and `emphasis_caption`.
 - `VisualAssetSuggestion`: update only `visual_asset_type`, `visual_description`, `generated_image_prompt`, `gif_or_clip_suggestion`, `stock_search_keywords`, `visual_source_strategy`, `capture_source_type`, `capture_usage_mode`, and `asset_usage_note`.
 - `EditingDirection`: update only `motion_direction`, `transition`, `sound_effect_hint`, and `editing_notes`.
-- `Safety`: review risky wording, copyright risk, rumor risk, and unsafe framing.
+- `Safety`: review risky wording, copyright risk, rumor risk, defamation risk, privacy/portrait risk, and source usage risk. It is not a legal judge; it flags risks and required human review.
 
 ## Invariants
 
@@ -37,6 +37,7 @@ Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVID
 - Do not overwrite results from earlier agents.
 - Validate enum values through the domain enums.
 - Preserve core fields such as `estimated_duration`, `narration`, and `scene_purpose`.
+- Safety review must not modify `Scene` objects; it may only update safety fields on `GenerationResult`.
 - Use `FakeLLMClient` in tests.
 - Never create tests that call the real OpenAI API.
 - Keep fake mode working as the default MVP behavior.

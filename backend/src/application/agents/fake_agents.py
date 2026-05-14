@@ -206,11 +206,13 @@ class FakeEditingDirectionAgent:
 class FakeSafetyReviewAgent:
     RISK_WORDS = ("루머", "비난", "확인 안 된", "저격", "허위", "猷⑤㉧", "鍮꾨궃")
 
-    def review(self, project: ContentProject, storyboard: Storyboard) -> SafetyReview:
+    def review(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> SafetyReview:
         if any(word in project.topic or word in project.tone for word in self.RISK_WORDS):
             return SafetyReview(
-                SafetyStatus.REVIEW_REQUIRED,
+                SafetyStatus.NEEDS_REVIEW,
                 ["검토 필요: 루머, 비난, 사실 확인 위험이 있는 표현이 포함되어 있습니다."],
+                rumor_or_defamation_risks=["Rumor-like or accusatory wording may need human fact review."],
+                required_human_review=True,
             )
         return SafetyReview(SafetyStatus.APPROVED, ["저작권과 루머 위험이 낮은 편집 지시서입니다."])
 
