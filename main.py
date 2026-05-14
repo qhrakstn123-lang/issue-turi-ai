@@ -7,9 +7,23 @@ from backend.src.presentation.composition import create_api
 from backend.src.presentation.http.server import create_server
 
 
+SMOKE_REAL_HINT = (
+    "Check the failing real agent JSON contract: invalid JSON, missing field, "
+    "unsupported enum value, unknown scene_id, or missing visual sourcing fields "
+    "(visual_source_strategy, capture_source_type, capture_usage_mode, asset_usage_note)."
+)
+
+
 def build_demo_payload(topic: str) -> dict[str, Any]:
+    payload, error = _build_demo_payload_with_diagnostics(topic)
+    if error is not None:
+        raise RuntimeError(error["error"])
+    return payload
+
+
+def _build_demo_payload_with_diagnostics(topic: str) -> tuple[dict[str, Any], None] | tuple[None, dict[str, Any]]:
     api = create_api()
-    _, create_payload = api.handle(
+    create_status, create_payload = api.handle(
         "POST",
         "/api/projects",
         {
@@ -21,10 +35,57 @@ def build_demo_payload(topic: str) -> dict[str, Any]:
             "output_format": "youtube_shorts",
         },
     )
-    project_id = create_payload["project"]["project_id"]
-    _, result_payload = api.handle("POST", "/api/generate/shorts-plan", {"project_id": project_id})
-    _, project_payload = api.handle("GET", f"/api/projects/{project_id}", None)
-    return {"project": project_payload["project"], "result": result_payload["result"]}
+    if create_status != 201:
+        return None, _smoke_real_error("create", create_status, create_payload)
+
+    project = create_payload.get("project")
+    project_id = project.get("project_id") if isinstance(project, dict) else None
+    if not project_id:
+        return None, _smoke_real_error(
+            "create",
+            create_status,
+            create_payload,
+            error="missing project_id in create response",
+        )
+    generate_status, result_payload = api.handle("POST", "/api/generate/shorts-plan", {"project_id": project_id})
+    if generate_status != 200:
+        return None, _smoke_real_error("generate", generate_status, result_payload)
+    if "result" not in result_payload:
+        return None, _smoke_real_error(
+            "generate",
+            generate_status,
+            result_payload,
+            error="missing result in generate response",
+        )
+
+    get_status, project_payload = api.handle("GET", f"/api/projects/{project_id}", None)
+    if get_status != 200:
+        return None, _smoke_real_error("get", get_status, project_payload)
+    if "project" not in project_payload:
+        return None, _smoke_real_error(
+            "get",
+            get_status,
+            project_payload,
+            error="missing project in get response",
+        )
+
+    return {"project": project_payload["project"], "result": result_payload["result"]}, None
+
+
+def _smoke_real_error(
+    stage: str,
+    status: int,
+    payload: dict[str, Any],
+    error: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "ok": False,
+        "stage": stage,
+        "status": status,
+        "error": error or str(payload.get("error", f"{stage} stage failed")),
+        "detail": payload,
+        "hint": SMOKE_REAL_HINT,
+    }
 
 
 def run_smoke_real(topic: str) -> dict[str, Any]:
@@ -39,15 +100,15 @@ def run_smoke_real(topic: str) -> dict[str, Any]:
         return {"ok": False, "error": "OPENAI_API_KEY is required for smoke-real"}
 
     try:
-        return {"ok": True, **build_demo_payload(topic)}
+        payload, error = _build_demo_payload_with_diagnostics(topic)
+        if error is not None:
+            return error
+        return {"ok": True, **payload}
     except Exception as exc:
         return {
             "ok": False,
             "error": f"{type(exc).__name__}: {exc}",
-            "hint": (
-                "Check the failing real agent JSON contract: invalid JSON, missing field, "
-                "unsupported enum value, or unknown scene_id."
-            ),
+            "hint": SMOKE_REAL_HINT,
         }
 
 

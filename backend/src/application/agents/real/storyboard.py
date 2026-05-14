@@ -5,7 +5,11 @@ from typing import Any
 
 from backend.src.application.agents.llm import LLMClient
 from backend.src.application.agents.prompts import PromptLoader
-from backend.src.application.agents.validation import JsonResponseValidator, LLMResponseValidationError
+from backend.src.application.agents.validation import (
+    JsonResponseValidator,
+    LLMResponseValidationError,
+    validate_agent_json_response,
+)
 from backend.src.domain.models import ContentProject, Scene, Storyboard, VideoScript
 
 
@@ -38,7 +42,7 @@ class RealStoryboardAgent:
 
     def generate(self, project: ContentProject, script: VideoScript) -> Storyboard:
         response = self.llm_client.complete(self._build_prompt(project, script))
-        payload = self.response_validator.validate(response)
+        payload = validate_agent_json_response("RealStoryboardAgent", self.response_validator, response)
         scenes_payload = payload["scenes"]
         if not isinstance(scenes_payload, list):
             raise ValueError("scenes must be a list")

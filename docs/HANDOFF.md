@@ -69,7 +69,7 @@ Do not print, commit, or hard-code API keys.
 - `RealScriptWriterAgent`: `title`, `narration`, `target_duration_seconds`, `style_notes`.
 - `RealStoryboardAgent`: creates initial `Scene` objects and stable `scene_id` values.
 - `RealSubtitleAgent`: updates only `subtitle` and `emphasis_caption`.
-- `RealVisualAssetSuggestionAgent`: updates only `visual_asset_type`, `visual_description`, `generated_image_prompt`, `gif_or_clip_suggestion`, and `stock_search_keywords`.
+- `RealVisualAssetSuggestionAgent`: updates only `visual_asset_type`, `visual_description`, `generated_image_prompt`, `gif_or_clip_suggestion`, `stock_search_keywords`, `visual_source_strategy`, `capture_source_type`, `capture_usage_mode`, and `asset_usage_note`.
 - `RealEditingDirectionAgent`: updates only `motion_direction`, `transition`, `sound_effect_hint`, and `editing_notes`.
 - `FakeSafetyReviewAgent`: currently provides safety status and notes.
 
@@ -88,20 +88,58 @@ Important tests:
 
 `tests/conftest.py` removes `ISSUE_TURI_LLM_PROVIDER`, `OPENAI_API_KEY`, and `OPENAI_MODEL` for each test so local real-mode environment variables do not leak into fake-mode tests.
 
-## Next Recommended Step
+## Visual Sourcing Strategy
 
-Before adding `RealSafetyReviewAgent`, enhance `RealVisualAssetSuggestionAgent` with visual sourcing strategy fields.
+Before adding `RealSafetyReviewAgent`, `RealVisualAssetSuggestionAgent` has been expanded from a simple AI image prompt agent into a per-scene visual sourcing strategy recommender.
 
-Recommended fields:
+Required fields:
 
 ```json
 {
   "visual_source_strategy": "mockup",
+  "capture_source_type": "community",
+  "capture_usage_mode": "mockup_recommended",
   "asset_usage_note": "Use a self-made community-style mockup instead of copying real screenshots."
 }
 ```
 
+Allowed `visual_source_strategy` values:
+- `reference_capture`
+- `mockup`
+- `stock_asset`
+- `ai_generated`
+- `original_sticker`
+- `text_card`
+- `user_provided`
+- `avoid`
+
+Allowed `capture_source_type` values:
+- `community`
+- `news`
+- `youtube`
+- `broadcast`
+- `instagram`
+- `google_image`
+- `stock_site`
+- `user_provided`
+- `ai_generated`
+- `none`
+
+Allowed `capture_usage_mode` values:
+- `direct_capture_candidate`
+- `mockup_recommended`
+- `license_required`
+- `permission_required`
+- `avoid`
+
 Guidelines:
+- Do not treat captures as categorically forbidden.
+- Classify whether each scene is a direct capture candidate, should become a mockup, needs license/permission review, or should be avoided.
+- Google image material should usually be `license_required`.
+- YouTube, broadcast, and news captures should usually be `permission_required` or `mockup_recommended`.
+- Community and Instagram captures must mention privacy, usernames, profile images, original comment text, and defamation risk in `asset_usage_note`.
+- User-owned or user-provided material may be classified as `user_provided`.
+- `asset_usage_note` must be non-empty.
 - Keep fake mode as default.
 - Use `FakeLLMClient` in tests.
 - Do not call the real OpenAI API in tests.

@@ -54,7 +54,7 @@ Real mode currently uses real LLM agents for:
 - `RealScriptWriterAgent`
 - `RealStoryboardAgent`
 - `RealSubtitleAgent`
-- `RealVisualAssetSuggestionAgent`
+- `RealVisualAssetSuggestionAgent` with per-scene visual sourcing strategy fields
 - `RealEditingDirectionAgent`
 
 Safety review is still fake:

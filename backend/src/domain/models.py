@@ -35,6 +35,38 @@ class VisualAssetType(StrEnum):
     BACKGROUND = "background"
 
 
+class VisualSourceStrategy(StrEnum):
+    REFERENCE_CAPTURE = "reference_capture"
+    MOCKUP = "mockup"
+    STOCK_ASSET = "stock_asset"
+    AI_GENERATED = "ai_generated"
+    ORIGINAL_STICKER = "original_sticker"
+    TEXT_CARD = "text_card"
+    USER_PROVIDED = "user_provided"
+    AVOID = "avoid"
+
+
+class CaptureSourceType(StrEnum):
+    COMMUNITY = "community"
+    NEWS = "news"
+    YOUTUBE = "youtube"
+    BROADCAST = "broadcast"
+    INSTAGRAM = "instagram"
+    GOOGLE_IMAGE = "google_image"
+    STOCK_SITE = "stock_site"
+    USER_PROVIDED = "user_provided"
+    AI_GENERATED = "ai_generated"
+    NONE = "none"
+
+
+class CaptureUsageMode(StrEnum):
+    DIRECT_CAPTURE_CANDIDATE = "direct_capture_candidate"
+    MOCKUP_RECOMMENDED = "mockup_recommended"
+    LICENSE_REQUIRED = "license_required"
+    PERMISSION_REQUIRED = "permission_required"
+    AVOID = "avoid"
+
+
 class MotionDirection(StrEnum):
     ZOOM_IN = "zoom_in"
     PAN_LEFT = "pan_left"
@@ -142,6 +174,10 @@ class Scene:
     estimated_duration: float
     editing_notes: str
     copyright_safety_note: str
+    visual_source_strategy: VisualSourceStrategy = VisualSourceStrategy.AI_GENERATED
+    capture_source_type: CaptureSourceType = CaptureSourceType.AI_GENERATED
+    capture_usage_mode: CaptureUsageMode = CaptureUsageMode.DIRECT_CAPTURE_CANDIDATE
+    asset_usage_note: str = "Use self-made or properly licensed assets and verify rights before publishing."
     generated_image_url: str | None = None
     sound_effect_asset: str | None = None
     actual_duration: float | None = None
@@ -159,6 +195,23 @@ class Scene:
             "motion_direction",
             _coerce_allowed_value(MotionDirection, self.motion_direction, "motion_direction"),
         )
+        object.__setattr__(
+            self,
+            "visual_source_strategy",
+            _coerce_allowed_value(VisualSourceStrategy, self.visual_source_strategy, "visual_source_strategy"),
+        )
+        object.__setattr__(
+            self,
+            "capture_source_type",
+            _coerce_allowed_value(CaptureSourceType, self.capture_source_type, "capture_source_type"),
+        )
+        object.__setattr__(
+            self,
+            "capture_usage_mode",
+            _coerce_allowed_value(CaptureUsageMode, self.capture_usage_mode, "capture_usage_mode"),
+        )
+        if not self.asset_usage_note.strip():
+            raise ValueError("asset_usage_note is required")
         object.__setattr__(
             self,
             "transition",
@@ -184,6 +237,10 @@ class Scene:
             generated_image_prompt="vertical Korean issue explainer background",
             gif_or_clip_suggestion="none",
             stock_search_keywords=["issue", "korea"],
+            visual_source_strategy="ai_generated",
+            capture_source_type="ai_generated",
+            capture_usage_mode="direct_capture_candidate",
+            asset_usage_note="Use self-made or properly licensed assets and verify rights before publishing.",
             motion_direction="zoom_in",
             transition="quick_cut",
             sound_effect_hint="pop",

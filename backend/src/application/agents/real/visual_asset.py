@@ -1,13 +1,28 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from enum import StrEnum
+from typing import Any, TypeVar
 
 from backend.src.application.agents.llm import LLMClient
 from backend.src.application.agents.prompts import PromptLoader
-from backend.src.application.agents.validation import JsonResponseValidator, LLMResponseValidationError
-from backend.src.domain.models import ContentProject, Storyboard, VideoScript, VisualAssetType
+from backend.src.application.agents.validation import (
+    JsonResponseValidator,
+    LLMResponseValidationError,
+    validate_agent_json_response,
+)
+from backend.src.domain.models import (
+    CaptureSourceType,
+    CaptureUsageMode,
+    ContentProject,
+    Storyboard,
+    VideoScript,
+    VisualAssetType,
+    VisualSourceStrategy,
+)
 
+
+EnumValue = TypeVar("EnumValue", bound=StrEnum)
 
 VISUAL_FIELDS = {
     "scene_id",
@@ -16,6 +31,10 @@ VISUAL_FIELDS = {
     "generated_image_prompt",
     "gif_or_clip_suggestion",
     "stock_search_keywords",
+    "visual_source_strategy",
+    "capture_source_type",
+    "capture_usage_mode",
+    "asset_usage_note",
 }
 
 
@@ -27,7 +46,7 @@ class RealVisualAssetSuggestionAgent:
 
     def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         response = self.llm_client.complete(self._build_prompt(project, script, storyboard))
-        payload = self.response_validator.validate(response)
+        payload = validate_agent_json_response("RealVisualAssetSuggestionAgent", self.response_validator, response)
         visuals_payload = payload["visuals"]
         if not isinstance(visuals_payload, list):
             raise LLMResponseValidationError("visuals must be a list")
@@ -93,14 +112,39 @@ class RealVisualAssetSuggestionAgent:
                 "generated_image_prompt": str(item["generated_image_prompt"]),
                 "gif_or_clip_suggestion": str(item["gif_or_clip_suggestion"]),
                 "stock_search_keywords": self._stock_search_keywords(item["stock_search_keywords"]),
+                "visual_source_strategy": self._enum_value(
+                    VisualSourceStrategy,
+                    item["visual_source_strategy"],
+                    "visual_source_strategy",
+                ),
+                "capture_source_type": self._enum_value(
+                    CaptureSourceType,
+                    item["capture_source_type"],
+                    "capture_source_type",
+                ),
+                "capture_usage_mode": self._enum_value(
+                    CaptureUsageMode,
+                    item["capture_usage_mode"],
+                    "capture_usage_mode",
+                ),
+                "asset_usage_note": self._asset_usage_note(item["asset_usage_note"]),
             }
         return updates
 
     def _visual_asset_type(self, value: Any) -> VisualAssetType:
+        return self._enum_value(VisualAssetType, value, "visual_asset_type")
+
+    def _enum_value(self, enum_type: type[EnumValue], value: Any, field_name: str) -> EnumValue:
         try:
-            return VisualAssetType(str(value))
+            return enum_type(str(value))
         except ValueError as exc:
-            raise LLMResponseValidationError(f"unsupported visual_asset_type: {value}") from exc
+            raise LLMResponseValidationError(f"unsupported {field_name}: {value}") from exc
+
+    def _asset_usage_note(self, value: Any) -> str:
+        note = str(value).strip()
+        if not note:
+            raise LLMResponseValidationError("asset_usage_note must be a non-empty string")
+        return note
 
     def _stock_search_keywords(self, value: Any) -> list[str]:
         if not isinstance(value, list):

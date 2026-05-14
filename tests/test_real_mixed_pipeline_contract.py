@@ -69,6 +69,10 @@ class RealMixedPipelineContractTests(unittest.TestCase):
                 "generated_image_prompt": f"real image prompt {index}",
                 "gif_or_clip_suggestion": f"clip suggestion {index}",
                 "stock_search_keywords": [f"real keyword {index}", "shorts"],
+                "visual_source_strategy": "text_card" if index == 2 else "mockup",
+                "capture_source_type": "none" if index == 2 else "youtube",
+                "capture_usage_mode": "mockup_recommended",
+                "asset_usage_note": f"Use a safe mockup for scene {index}; do not copy real captions or thumbnails.",
             }
             for index, scene in enumerate(scenes, start=1)
         ]
@@ -116,6 +120,10 @@ class RealMixedPipelineContractTests(unittest.TestCase):
         self.assertEqual(first.generated_image_prompt, "real image prompt 1")
         self.assertEqual(first.gif_or_clip_suggestion, "clip suggestion 1")
         self.assertEqual(first.stock_search_keywords, ["real keyword 1", "shorts"])
+        self.assertEqual(first.visual_source_strategy, "mockup")
+        self.assertEqual(first.capture_source_type, "youtube")
+        self.assertEqual(first.capture_usage_mode, "mockup_recommended")
+        self.assertEqual(first.asset_usage_note, "Use a safe mockup for scene 1; do not copy real captions or thumbnails.")
         self.assertEqual(first.motion_direction, "zoom_in")
         self.assertEqual(first.transition, "quick_cut")
         self.assertEqual(first.sound_effect_hint, "pop")
@@ -131,6 +139,8 @@ class RealMixedPipelineContractTests(unittest.TestCase):
         self.assertEqual(second.emphasis_caption, "emphasis 2")
         self.assertEqual(second.visual_asset_type, "text_only")
         self.assertEqual(second.visual_description, "real visual 2")
+        self.assertEqual(second.visual_source_strategy, "text_card")
+        self.assertEqual(second.capture_source_type, "none")
         self.assertEqual(second.motion_direction, "pan_left")
         self.assertEqual(second.transition, "quick_cut")
         self.assertEqual(second.sound_effect_hint, "pop")

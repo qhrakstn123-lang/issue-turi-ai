@@ -5,7 +5,11 @@ from typing import Any
 
 from backend.src.application.agents.llm import LLMClient
 from backend.src.application.agents.prompts import PromptLoader
-from backend.src.application.agents.validation import JsonResponseValidator, LLMResponseValidationError
+from backend.src.application.agents.validation import (
+    JsonResponseValidator,
+    LLMResponseValidationError,
+    validate_agent_json_response,
+)
 from backend.src.domain.models import (
     ContentProject,
     MotionDirection,
@@ -33,7 +37,7 @@ class RealEditingDirectionAgent:
 
     def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         response = self.llm_client.complete(self._build_prompt(project, script, storyboard))
-        payload = self.response_validator.validate(response)
+        payload = validate_agent_json_response("RealEditingDirectionAgent", self.response_validator, response)
         directions_payload = payload["editing_directions"]
         if not isinstance(directions_payload, list):
             raise LLMResponseValidationError("editing_directions must be a list")

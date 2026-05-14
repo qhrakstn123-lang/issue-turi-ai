@@ -56,6 +56,10 @@ def visual_payload(**overrides):
         "generated_image_prompt": "vertical 9:16 smartphone screen, Korean comments, AI content automation",
         "gif_or_clip_suggestion": "typing comments animation",
         "stock_search_keywords": ["AI automation", "shorts editing", "social media comments"],
+        "visual_source_strategy": "reference_capture",
+        "capture_source_type": "community",
+        "capture_usage_mode": "mockup_recommended",
+        "asset_usage_note": "Use a self-made community-style mockup and avoid exposing real usernames or comments.",
     }
     item.update(overrides)
     return {"visuals": [item]}
@@ -70,6 +74,20 @@ def visual_agent_for(payload):
 
 
 class RealVisualAssetSuggestionAgentTests(unittest.TestCase):
+    def test_visual_prompt_prioritizes_reference_capture_when_source_context_matters(self):
+        prompt = Path("prompts/shorts/visual_prompt.md").read_text(encoding="utf-8")
+
+        self.assertIn("reference_capture first", prompt)
+        self.assertIn("direct_capture_candidate means candidate only", prompt)
+        self.assertIn("community -> reference_capture + community", prompt)
+        self.assertIn("news -> reference_capture + news", prompt)
+        self.assertIn("youtube -> reference_capture + youtube", prompt)
+        self.assertIn("broadcast -> reference_capture + broadcast", prompt)
+        self.assertIn("instagram -> reference_capture + instagram", prompt)
+        self.assertIn("google_image -> reference_capture + google_image", prompt)
+        self.assertIn("google_image: license_required", prompt)
+        self.assertIn("Blur or reconstruct usernames", prompt)
+
     def test_agent_updates_visual_fields_by_scene_id(self):
         client = FakeLLMClient([json.dumps(visual_payload(), ensure_ascii=False)])
         with tempfile.TemporaryDirectory() as directory:
@@ -90,6 +108,10 @@ class RealVisualAssetSuggestionAgentTests(unittest.TestCase):
         self.assertIn("vertical 9:16", first.generated_image_prompt)
         self.assertEqual(first.gif_or_clip_suggestion, "typing comments animation")
         self.assertEqual(first.stock_search_keywords, ["AI automation", "shorts editing", "social media comments"])
+        self.assertEqual(first.visual_source_strategy, "reference_capture")
+        self.assertEqual(first.capture_source_type, "community")
+        self.assertEqual(first.capture_usage_mode, "mockup_recommended")
+        self.assertIn("avoid exposing real usernames", first.asset_usage_note)
         self.assertEqual(first.subtitle, "original subtitle")
         self.assertEqual(first.emphasis_caption, "original emphasis")
         self.assertEqual(first.motion_direction, "shake")
@@ -123,6 +145,53 @@ class RealVisualAssetSuggestionAgentTests(unittest.TestCase):
         agent = visual_agent_for(visual_payload(visual_asset_type="poster"))
 
         with self.assertRaisesRegex(LLMResponseValidationError, "visual_asset_type"):
+            agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_invalid_visual_source_strategy(self):
+        agent = visual_agent_for(visual_payload(visual_source_strategy="copied_screenshot"))
+
+        with self.assertRaisesRegex(LLMResponseValidationError, "visual_source_strategy"):
+            agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_invalid_capture_source_type(self):
+        agent = visual_agent_for(visual_payload(capture_source_type="forum"))
+
+        with self.assertRaisesRegex(LLMResponseValidationError, "capture_source_type"):
+            agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_invalid_capture_usage_mode(self):
+        agent = visual_agent_for(visual_payload(capture_usage_mode="free_to_use"))
+
+        with self.assertRaisesRegex(LLMResponseValidationError, "capture_usage_mode"):
+            agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_missing_asset_usage_note(self):
+        payload = visual_payload()
+        del payload["visuals"][0]["asset_usage_note"]
+        agent = visual_agent_for(payload)
+
+        with self.assertRaisesRegex(LLMResponseValidationError, "asset_usage_note"):
+            agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_missing_visual_sourcing_fields_with_field_names(self):
+        for field_name in [
+            "visual_source_strategy",
+            "capture_source_type",
+            "capture_usage_mode",
+            "asset_usage_note",
+        ]:
+            with self.subTest(field_name=field_name):
+                payload = visual_payload()
+                del payload["visuals"][0][field_name]
+                agent = visual_agent_for(payload)
+
+                with self.assertRaisesRegex(LLMResponseValidationError, field_name):
+                    agent.apply(project(), script(), storyboard())
+
+    def test_agent_rejects_empty_asset_usage_note(self):
+        agent = visual_agent_for(visual_payload(asset_usage_note=" "))
+
+        with self.assertRaisesRegex(LLMResponseValidationError, "asset_usage_note"):
             agent.apply(project(), script(), storyboard())
 
     def test_agent_rejects_invalid_stock_search_keywords_type(self):

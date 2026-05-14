@@ -2,6 +2,11 @@
 
 Write motion, transition, sound-effect hints, and practical editing notes for each storyboard scene.
 
+Return only a valid JSON object.
+Do not include markdown code fences.
+Do not include explanations before or after JSON.
+Do not include comments.
+Do not return a markdown list.
 Return JSON only. Do not wrap the JSON in Markdown.
 
 Required top-level shape:

@@ -5,7 +5,11 @@ from typing import Any
 
 from backend.src.application.agents.llm import LLMClient
 from backend.src.application.agents.prompts import PromptLoader
-from backend.src.application.agents.validation import JsonResponseValidator, LLMResponseValidationError
+from backend.src.application.agents.validation import (
+    JsonResponseValidator,
+    LLMResponseValidationError,
+    validate_agent_json_response,
+)
 from backend.src.domain.models import ContentProject, Storyboard, VideoScript
 
 
@@ -20,7 +24,7 @@ class RealSubtitleAgent:
 
     def apply(self, project: ContentProject, script: VideoScript, storyboard: Storyboard) -> Storyboard:
         response = self.llm_client.complete(self._build_prompt(project, script, storyboard))
-        payload = self.response_validator.validate(response)
+        payload = validate_agent_json_response("RealSubtitleAgent", self.response_validator, response)
         subtitles_payload = payload["subtitles"]
         if not isinstance(subtitles_payload, list):
             raise LLMResponseValidationError("subtitles must be a list")
