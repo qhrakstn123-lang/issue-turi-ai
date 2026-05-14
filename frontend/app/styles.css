@@ -107,6 +107,24 @@ button:hover {
   background: var(--accent-strong);
 }
 
+.result-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -6px 0 14px;
+}
+
+.secondary-button {
+  background: #fff;
+  border: 1px solid var(--accent);
+  color: var(--accent-strong);
+  padding: 9px 12px;
+  width: auto;
+}
+
+.secondary-button:hover {
+  background: var(--soft);
+}
+
 .status-pill {
   border: 1px solid var(--line);
   border-radius: 999px;

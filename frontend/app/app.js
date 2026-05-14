@@ -5,11 +5,19 @@ const statusPill = document.querySelector("#status-pill");
 const safetyStatus = document.querySelector("#safety-status");
 const resultSummary = document.querySelector("#result-summary");
 const safetyReview = document.querySelector("#safety-review");
+const downloadJsonButton = document.querySelector("#download-json");
 const template = document.querySelector("#scene-template");
+let currentGenerationResult = null;
+
+downloadJsonButton.addEventListener("click", () => {
+  downloadCurrentGenerationResult();
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   setStatus("Generating", false);
+  currentGenerationResult = null;
+  downloadJsonButton.hidden = true;
   resultSummary.replaceChildren();
   safetyReview.replaceChildren();
   sceneList.replaceChildren();
@@ -20,9 +28,13 @@ form.addEventListener("submit", async (event) => {
     const projectId = projectResponse.project.project_id;
     const resultResponse = await postJson("/api/generate/shorts-plan", { project_id: projectId });
     renderResult(resultResponse.result);
+    currentGenerationResult = resultResponse.result;
+    downloadJsonButton.hidden = false;
     setStatus("Complete", false);
   } catch (error) {
     setStatus("Failed", true);
+    currentGenerationResult = null;
+    downloadJsonButton.hidden = true;
     resultSummary.replaceChildren();
     safetyReview.replaceChildren();
     sceneList.replaceChildren(createErrorRow(error));
@@ -236,6 +248,36 @@ function createErrorRow(error) {
 function setStatus(text, isWarning) {
   statusPill.textContent = text;
   statusPill.classList.toggle("warn", isWarning);
+}
+
+function downloadCurrentGenerationResult() {
+  if (!currentGenerationResult) {
+    return;
+  }
+
+  const json = JSON.stringify(currentGenerationResult, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `issue-turi-plan-${timestampForFilename(new Date())}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function timestampForFilename(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+    "-",
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds()),
+  ].join("");
 }
 
 function isRiskySafetyStatus(status) {

@@ -31,6 +31,21 @@ class StaticFrontendTests(unittest.TestCase):
         self.assertIn("asset_usage_note", script)
         self.assertIn("stock_search_keywords", script)
 
+    def test_static_frontend_can_download_generation_result_json(self):
+        html = Path("frontend/app/index.html").read_text(encoding="utf-8")
+        script = Path("frontend/app/app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="download-json"', html)
+        self.assertIn("Download JSON", html)
+        self.assertIn("currentGenerationResult", script)
+        self.assertIn("downloadJsonButton.hidden = false", script)
+        self.assertIn("downloadJsonButton.hidden = true", script)
+        self.assertIn("JSON.stringify(currentGenerationResult, null, 2)", script)
+        self.assertIn("new Blob", script)
+        self.assertIn("URL.createObjectURL", script)
+        self.assertIn("issue-turi-plan-", script)
+        self.assertIn(".json", script)
+
 
 if __name__ == "__main__":
     unittest.main()
