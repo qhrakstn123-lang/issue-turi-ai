@@ -28,6 +28,7 @@ Read these before making changes:
 - `.agents/skills/issue-turi-shorts-generation/SKILL.md`
 - `README.md`
 - `docs/HANDOFF.md`
+- `docs/current-project-state.md`
 
 ## Test Command
 
