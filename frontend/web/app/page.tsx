@@ -8,7 +8,7 @@ import { SafetyReviewPanel } from "../components/SafetyReviewPanel";
 import { SceneCard } from "../components/SceneCard";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { createProject, generateShortsPlan } from "../lib/api";
-import type { GenerationResult, ProjectPayload } from "../lib/types";
+import type { AssetSourceCandidate, GenerationResult, ProjectPayload } from "../lib/types";
 
 const menuItems = [
   "홈",
@@ -24,6 +24,7 @@ const menuItems = [
 
 export default function HomePage() {
   const [result, setResult] = useState<GenerationResult | null>(null);
+  const [assetSourceCandidates, setAssetSourceCandidates] = useState<AssetSourceCandidate[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -31,6 +32,7 @@ export default function HomePage() {
     setIsGenerating(true);
     setError(null);
     setResult(null);
+    setAssetSourceCandidates([]);
     try {
       const created = await createProject(payload);
       const generated = await generateShortsPlan(created.project.project_id);
@@ -40,6 +42,30 @@ export default function HomePage() {
     } finally {
       setIsGenerating(false);
     }
+  }
+
+  function onAddAssetCandidate(candidate: Omit<AssetSourceCandidate, "asset_candidate_id">) {
+    setAssetSourceCandidates((current) => [
+      ...current,
+      {
+        ...candidate,
+        asset_candidate_id: createAssetCandidateId(),
+      },
+    ]);
+  }
+
+  function onUpdateAssetCandidate(assetCandidateId: string, updates: Partial<AssetSourceCandidate>) {
+    setAssetSourceCandidates((current) =>
+      current.map((candidate) =>
+        candidate.asset_candidate_id === assetCandidateId ? { ...candidate, ...updates } : candidate,
+      ),
+    );
+  }
+
+  function onDeleteAssetCandidate(assetCandidateId: string) {
+    setAssetSourceCandidates((current) =>
+      current.filter((candidate) => candidate.asset_candidate_id !== assetCandidateId),
+    );
   }
 
   return (
@@ -80,7 +106,7 @@ export default function HomePage() {
             <button className="ghost-button" type="button" disabled>
               새 프로젝트
             </button>
-            <JsonDownloadButton result={result} />
+            <JsonDownloadButton result={result} assetSourceCandidates={assetSourceCandidates} />
             <span className={result && result.safety_status !== "approved" ? "status-pill warn" : "status-pill muted"}>
               {result?.safety_status || "검토 전"}
             </span>
@@ -123,7 +149,13 @@ export default function HomePage() {
                     ))}
                   </div>
                   <aside className="review-column">
-                    <TimelinePanel result={result} />
+                    <TimelinePanel
+                      result={result}
+                      assetSourceCandidates={assetSourceCandidates}
+                      onAddAssetCandidate={onAddAssetCandidate}
+                      onUpdateAssetCandidate={onUpdateAssetCandidate}
+                      onDeleteAssetCandidate={onDeleteAssetCandidate}
+                    />
                     <SafetyReviewPanel result={result} />
                     <div className="placeholder-card">
                       <span className="eyebrow">Preview</span>
@@ -144,4 +176,11 @@ export default function HomePage() {
       </section>
     </main>
   );
+}
+
+function createAssetCandidateId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `asset-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }

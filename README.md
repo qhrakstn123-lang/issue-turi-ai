@@ -3,8 +3,8 @@
 AI content planning tool for the YouTube channel "이슈털이".
 
 Current scope:
-- Static MVP frontend
-- Optional Next.js + React frontend in `frontend/web`
+- Primary Next.js + React + TypeScript frontend in `frontend/web`
+- Legacy static frontend in `frontend/app`
 - HTTP JSON API
 - In-memory repository
 - Default fake-agent shorts planning pipeline
@@ -24,6 +24,8 @@ http://localhost:3000
 ```
 
 The Next.js app calls same-origin `/api/...` routes, and those routes proxy to the internal Python backend at `http://127.0.0.1:8000`.
+If Next.js chooses another dev port, use the actual port printed by `npm run dev`.
+`http://127.0.0.1:8000` is the backend API server and legacy static page host, not the primary ShortsFlow UI.
 
 ```powershell
 uv run --project . python --version
@@ -41,7 +43,7 @@ Automated tests use fake clients only. They must not call real OpenAI APIs or an
 
 Fake mode is the default and does not require an API key.
 
-Run the browser MVP:
+Run the backend API and legacy static page:
 
 ```powershell
 uv run --project . python -m backend.src.presentation.http.server
@@ -53,7 +55,7 @@ Open:
 http://127.0.0.1:8000
 ```
 
-Run the optional Next.js frontend in another terminal:
+Run the primary Next.js frontend in another terminal:
 
 ```powershell
 cd frontend/web
@@ -67,7 +69,7 @@ Open:
 http://127.0.0.1:3000
 ```
 
-The Next.js frontend calls the backend at `http://127.0.0.1:8000` by default. Set `NEXT_PUBLIC_API_BASE_URL` if the backend runs elsewhere.
+The Next.js frontend calls same-origin `/api/...` by default. The route handler proxies to `http://127.0.0.1:8000`. Set `BACKEND_API_BASE_URL` if the backend runs elsewhere.
 
 Run the demo payload:
 

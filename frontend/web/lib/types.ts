@@ -115,6 +115,39 @@ export type Timeline = {
   scenes: TimelineScene[];
 };
 
+export type AssetSourceType =
+  | "community"
+  | "news"
+  | "youtube"
+  | "broadcast"
+  | "instagram"
+  | "google_image"
+  | "stock_site"
+  | "ai_generated"
+  | "user_provided"
+  | "mockup";
+
+export type AssetLicenseStatus = "unchecked" | "license_required" | "permission_required" | "cleared" | "avoid";
+
+export type AssetSourceCandidate = {
+  asset_candidate_id: string;
+  scene_id: string;
+  source_type: AssetSourceType;
+  source_url: string;
+  source_title: string;
+  usage_mode: string;
+  license_status: AssetLicenseStatus;
+  needs_blur: boolean;
+  needs_rewrite: boolean;
+  approved_for_use: boolean;
+  review_notes: string;
+};
+
+export type AssetSourceExportPayload = {
+  generation_result: GenerationResult;
+  asset_source_candidates: AssetSourceCandidate[];
+};
+
 export type GenerationResult = {
   project_id: string;
   video_script: VideoScript;

@@ -1,17 +1,22 @@
 "use client";
 
-import type { GenerationResult } from "../lib/types";
+import type { AssetSourceCandidate, AssetSourceExportPayload, GenerationResult } from "../lib/types";
 
 type JsonDownloadButtonProps = {
   result: GenerationResult | null;
+  assetSourceCandidates?: AssetSourceCandidate[];
 };
 
-export function JsonDownloadButton({ result }: JsonDownloadButtonProps) {
+export function JsonDownloadButton({ result, assetSourceCandidates = [] }: JsonDownloadButtonProps) {
   function handleDownload() {
     if (!result) {
       return;
     }
-    const json = JSON.stringify(result, null, 2);
+    const exportPayload: AssetSourceExportPayload = {
+      generation_result: result,
+      asset_source_candidates: assetSourceCandidates,
+    };
+    const json = JSON.stringify(exportPayload, null, 2);
     const blob = new Blob([json], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

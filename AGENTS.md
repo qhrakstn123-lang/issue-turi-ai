@@ -8,12 +8,13 @@ Final goal:
 topic input -> script -> scenes -> subtitles -> visual prompts -> image/TTS generation -> motion directions -> sound cues -> timeline -> MP4 rendering.
 
 Current phase:
-MVP 1 / structure hardening.
+MVP 1 / planning and preview hardening.
 
 Current MVP goal:
-- Generate a shorts planning document.
-- Use fake agents only.
-- Do not call real OpenAI, ElevenLabs, image generation, TTS, or rendering APIs yet.
+- Generate a shorts planning document and browser preview.
+- Use fake agents by default.
+- Use real LLM agents only when `ISSUE_TURI_LLM_PROVIDER` is `openai` or `real`.
+- Do not call ElevenLabs, image generation, TTS, or rendering APIs yet.
 - Keep the app simple and testable.
 
 ## Python and uv Rules
@@ -57,7 +58,8 @@ Keep the layered structure:
 - application: use cases, agents, pipelines, services
 - infrastructure: external clients, repositories, providers, renderers
 - presentation: HTTP/API layer
-- frontend: static UI for MVP
+- frontend/web: primary Next.js + React + TypeScript UI
+- frontend/app: legacy static 안내/호환 UI
 - tests: automated tests
 - docs: project documentation
 - prompts: prompt templates
@@ -203,14 +205,19 @@ Avoid excessive personal attacks or defamatory claims.
 
 ## Frontend Rules
 
-Current frontend is a simple static MVP.
-Keep it simple until backend structure is stable.
-Do not introduce heavy frameworks unless requested.
+Current primary frontend is `frontend/web`, a Next.js + React + TypeScript ShortsFlow UI.
 
-Development server:
+`frontend/app` is a legacy static 안내/호환 page. Keep it available, but do not add new product UI features there.
+
+Future UI work should target `frontend/web` unless explicitly requested.
+
+Backend/API server:
 - `uv run --project . python -m backend.src.presentation.http.server`
 
-Browser URL:
+Primary browser URL:
+- `http://localhost:3000`
+
+Backend and legacy URL:
 - `http://127.0.0.1:8000`
 
 ## Refactoring Rules

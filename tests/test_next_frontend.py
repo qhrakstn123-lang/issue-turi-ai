@@ -22,6 +22,7 @@ class NextFrontendTests(unittest.TestCase):
             "SourcingSection",
             "EditingSection",
             "TimelinePanel",
+            "AssetCandidateRegister",
             "JsonDownloadButton",
         ]
         for component_name in component_names:
@@ -53,7 +54,9 @@ class NextFrontendTests(unittest.TestCase):
         sourcing = Path("frontend/web/components/SourcingSection.tsx").read_text(encoding="utf-8")
         safety = Path("frontend/web/components/SafetyReviewPanel.tsx").read_text(encoding="utf-8")
         timeline = Path("frontend/web/components/TimelinePanel.tsx").read_text(encoding="utf-8")
+        asset_register = Path("frontend/web/components/AssetCandidateRegister.tsx").read_text(encoding="utf-8")
         download = Path("frontend/web/components/JsonDownloadButton.tsx").read_text(encoding="utf-8")
+        types = Path("frontend/web/lib/types.ts").read_text(encoding="utf-8")
 
         self.assertIn("createProject", page)
         self.assertIn("generateShortsPlan", page)
@@ -70,8 +73,35 @@ class NextFrontendTests(unittest.TestCase):
         self.assertIn("scene.beats", timeline)
         self.assertIn("beat.beat_type", timeline)
         self.assertIn("asset_review_checklist", timeline)
-        self.assertIn("JSON.stringify(result, null, 2)", download)
+        self.assertIn("scene.beats ?? []", timeline)
+        self.assertIn("scene.asset_review_checklist ?? []", timeline)
+        self.assertIn("AssetCandidateRegister", timeline)
+        self.assertIn("AssetSourceCandidate", types)
+        self.assertIn("asset_candidate_id", types)
+        self.assertIn('"community"', types)
+        self.assertIn('"license_required"', types)
+        self.assertIn("자료 후보 등록", asset_register)
+        self.assertIn("onAddCandidate", asset_register)
+        self.assertIn("onDeleteCandidate", asset_register)
+        self.assertIn("approved_for_use", asset_register)
+        self.assertIn("검토 필요", asset_register)
+        self.assertIn("asset_source_candidates", download)
+        self.assertIn("generation_result", download)
+        self.assertIn("JSON.stringify(exportPayload, null, 2)", download)
         self.assertIn("issue-turi-plan-", download)
+
+    def test_next_frontend_keeps_asset_candidates_frontend_only(self):
+        page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")
+        api = Path("frontend/web/lib/api.ts").read_text(encoding="utf-8")
+        asset_register = Path("frontend/web/components/AssetCandidateRegister.tsx").read_text(encoding="utf-8")
+
+        self.assertIn("assetSourceCandidates", page)
+        self.assertIn("setAssetSourceCandidates", page)
+        self.assertIn("onAddAssetCandidate", page)
+        self.assertIn("onUpdateAssetCandidate", page)
+        self.assertIn("onDeleteAssetCandidate", page)
+        self.assertNotIn("asset_source_candidates", api)
+        self.assertNotIn("fetch(", asset_register)
 
     def test_next_frontend_uses_shortsflow_dark_studio_shell(self):
         layout = Path("frontend/web/app/layout.tsx").read_text(encoding="utf-8")

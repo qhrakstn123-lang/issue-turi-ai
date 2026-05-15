@@ -4,6 +4,50 @@
 
 ### 작업 내용
 
+현재 구현 상태 기준으로 문서와 테스트 문자열 상태를 정리했다. 기능 코드, backend API, frontend 동작은 변경하지 않았다.
+
+정리한 기준:
+
+- 현재 주 UI는 `frontend/web`의 Next.js + React + TypeScript ShortsFlow UI다.
+- `frontend/app`은 삭제하지 않고 legacy 안내/호환 페이지로 유지한다.
+- 신규 UI 작업은 `frontend/web` 기준으로 진행한다.
+- `http://localhost:3000` 또는 실제 Next.js dev port가 ShortsFlow 작업 화면이다.
+- `http://127.0.0.1:8000`은 backend API server와 legacy static page host다.
+- 기본 mode는 fake pipeline이다.
+- `openai` 또는 `real` provider mode에서만 real LLM pipeline을 사용한다.
+- `GenerationResult.timeline`, production beats, asset review checklist, frontend-only Manual Asset Register 상태를 문서에 반영했다.
+- JSON export 구조는 `generation_result`와 `asset_source_candidates` 기준으로 정리했다.
+
+### 변경 파일
+
+- `AGENTS.md`
+- `.agents/skills/issue-turi-shorts-generation/SKILL.md`
+- `README.md`
+- `docs/RUNNING.md`
+- `docs/HANDOFF.md`
+- `docs/current-project-state.md`
+- `docs/TECH_STACK.md`
+- `docs/product-plan.md`
+- `doc/SHORTSFLOW_UPDATED_PRODUCT_PLAN_WITH_UI_REFERENCE.md`
+- `docs/DEVELOPMENT_LOG.md`
+
+### 검증 결과
+
+```text
+uv run --project . --with pytest pytest -q: 102 passed, 38 subtests passed
+npm.cmd run typecheck: succeeded
+npm.cmd run lint: no warnings or errors
+npm.cmd run build: succeeded
+```
+
+### 다음 단계
+
+Manual Edit / Scene 수정 UI를 먼저 진행한 뒤 Publishing Readiness를 추가하는 순서를 추천한다.
+
+## 2026-05-15
+
+### 작업 내용
+
 Timeline에 rule-based Shorts production beat와 scene별 asset review checklist를 추가했다. 새 LLM agent, prompt, 외부 API, 이미지/TTS/MP4 기능은 추가하지 않았다.
 
 ### 변경 파일

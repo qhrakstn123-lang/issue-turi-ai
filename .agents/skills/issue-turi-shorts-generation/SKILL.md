@@ -42,16 +42,26 @@ Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVID
 - Never create tests that call the real OpenAI API.
 - Keep fake mode working as the default MVP behavior.
 
+## Frontend State
+
+- The primary ShortsFlow UI is `frontend/web` using Next.js, React, and TypeScript.
+- `frontend/app` is a legacy static 안내/호환 page. Do not add new UI product features there unless explicitly requested.
+- Browser work should target `http://localhost:3000` or the actual Next.js dev port.
+- `http://127.0.0.1:8000` is the Python backend API server and legacy static page host.
+
 ## Reference Channel Rules
 
 Reference channels:
+
 - 뇌전구: https://www.youtube.com/@%EB%87%8C%EC%A0%84%EA%B5%AC
-- 걍석주: https://www.youtube.com/@%EA%B1%8D%EC%84%9D%EC%A3%BC
+- 걱석주: https://www.youtube.com/@%EA%B1%8D%EC%84%9D%EC%A3%BC
 
 Operating channel:
+
 - 이슈털이: https://www.youtube.com/@issueyo
 
 Use reference channels only for general production grammar:
+
 - hook style
 - subtitle rhythm
 - cut pacing
@@ -63,6 +73,7 @@ Do not copy exact scripts, captions, thumbnails, branding, unique expressions, d
 ## Visual Asset Rules
 
 Do not assume every scene needs an AI-generated image. Suggest the best safe visual form per scene:
+
 - reference capture candidates
 - community-capture-style mockups
 - licensed stock images or clips
@@ -71,6 +82,7 @@ Do not assume every scene needs an AI-generated image. Suggest the best safe vis
 - AI image prompts
 
 Capture is not categorically banned, but the agent must classify the sourcing plan for each scene:
+
 - `visual_source_strategy`: `reference_capture`, `mockup`, `stock_asset`, `ai_generated`, `original_sticker`, `text_card`, `user_provided`, or `avoid`
 - `capture_source_type`: `community`, `news`, `youtube`, `broadcast`, `instagram`, `google_image`, `stock_site`, `user_provided`, `ai_generated`, or `none`
 - `capture_usage_mode`: `direct_capture_candidate`, `mockup_recommended`, `license_required`, `permission_required`, or `avoid`

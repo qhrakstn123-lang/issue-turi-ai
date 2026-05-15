@@ -22,12 +22,15 @@ Not implemented yet:
 
 Recently added:
 - Browser preview shows visual sourcing and safety review details.
-- Browser-only JSON download exports the current `GenerationResult`.
-- Optional Next.js + React + TypeScript frontend exists under `frontend/web`.
+- Browser-only JSON download exports the current `GenerationResult` and frontend-only asset candidates.
+- The primary UI is the Next.js + React + TypeScript frontend under `frontend/web`.
+- `frontend/app` remains as a legacy static 안내/호환 page. Do not add new product UI features there.
 - `frontend/web` has been redesigned as a ShortsFlow dark-mode SaaS planning studio.
 - `GenerationResult.timeline` is now returned by the backend and shown in the Next.js `TimelinePanel`.
 - The Next.js app now uses same-origin `/api/...` routes on `localhost:3000`; those route handlers proxy to the internal Python backend at `127.0.0.1:8000`.
 - Timeline scenes now include rule-based production beats and an asset review checklist.
+- The Next.js timeline now includes a frontend-only Manual Asset Register. Users can add, edit, approve, and delete scene-level `asset_source_candidates` beside the asset review checklist.
+- JSON download now exports `{ "generation_result": ..., "asset_source_candidates": [...] }`. The candidates are browser state only and are not persisted to the backend or a database.
 
 ## Must Read First
 
@@ -52,7 +55,17 @@ Automated tests must not call real OpenAI or any external API.
 
 ## Frontend Options
 
-Static MVP frontend:
+Primary browser UI:
+
+```text
+http://localhost:3000
+```
+
+If Next.js assigns another dev port, use the port printed by `npm run dev`.
+
+`http://127.0.0.1:8000` remains the Python backend API server and legacy static page host. It is not the primary ShortsFlow UI.
+
+Legacy static frontend:
 
 ```powershell
 uv run --project . python -m backend.src.presentation.http.server
@@ -64,7 +77,7 @@ Open:
 http://127.0.0.1:8000
 ```
 
-Optional Next.js frontend:
+Next.js frontend:
 
 ```powershell
 cd frontend/web
@@ -142,17 +155,23 @@ Important tests:
 
 ## Recommended Next Step
 
-Recommended next step: refine upload/publishing readiness before DB persistence.
+Recommended next step: implement Manual Edit / Scene 수정 UI first, then Publishing Readiness.
 
 Reason:
 - The project already produces rich scene-level planning data.
 - Timeline now includes scene timing, production beats, and asset review checklist data.
-- Publishing readiness can turn the plan into a practical pre-upload safety/originality checklist.
-- DB persistence is useful, but storing data before the timeline contract is stable may create migration churn.
+- Manual editing lets users correct generated text, captions, sourcing notes, and timeline-facing scene data before persistence or media generation.
+- Publishing readiness can then turn the edited plan into a practical pre-upload safety/originality checklist.
+- DB persistence is useful, but storing data before the editable planning contract is stable may create migration churn.
 
 Concrete next slice:
+- Add `frontend/web` scene editing controls for safe editable fields.
+- Keep edits local or export-only unless persistence is explicitly scoped.
+- Do not change `frontend/app`.
+- Do not add image generation, TTS, or MP4 rendering yet.
+
+Next slice after that:
 - Add publishing readiness fields such as originality risk, reused-content risk, monetization risk, and required human checks.
-- Keep it as planning data only; do not add image generation, TTS, or MP4 rendering yet.
 - Keep it as planning data only; do not add image generation, TTS, or MP4 rendering yet.
 
 Alternative next step: DB persistence with SQLite if the immediate need is to preserve generated projects and edited scenes between browser sessions.

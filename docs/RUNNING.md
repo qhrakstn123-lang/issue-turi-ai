@@ -88,28 +88,32 @@ npm run dev
 Next.js 프런트엔드 주소:
 
 ```text
-http://127.0.0.1:3000
+http://localhost:3000
 ```
 
-`frontend/web`는 기본적으로 `http://127.0.0.1:8000` 백엔드 API를 호출합니다.
+Next.js가 3000 포트를 사용할 수 없어 다른 포트를 표시하면, 터미널에 출력된 실제 dev port를 사용합니다.
+
+`frontend/web`는 기본적으로 same-origin `/api/...`를 호출합니다. Next.js route handler가 내부적으로 `http://127.0.0.1:8000` 백엔드 API에 전달합니다.
 
 백엔드 주소를 바꾸고 싶으면 Next.js 실행 전에 설정합니다.
 
 ```powershell
 cd frontend/web
-$env:NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
+$env:BACKEND_API_BASE_URL="http://127.0.0.1:8000"
 npm run dev
 ```
 
-## Static MVP Frontend
+## Legacy Static Frontend
 
-가장 단순한 실행 방식입니다. 백엔드 서버 하나가 API와 정적 HTML/CSS/JS 프런트엔드를 같이 제공합니다.
+`frontend/app`은 legacy 안내/호환 페이지입니다. 백엔드 서버 하나가 API와 정적 HTML/CSS/JS 프런트엔드를 같이 제공합니다.
+
+신규 UI 기능은 `frontend/app`에 추가하지 않고 `frontend/web`에서 작업합니다.
 
 ```powershell
 uv run --project . python -m backend.src.presentation.http.server
 ```
 
-브라우저에서 엽니다.
+legacy 페이지를 브라우저에서 엽니다.
 
 ```text
 http://127.0.0.1:8000
