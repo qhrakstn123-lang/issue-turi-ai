@@ -4,6 +4,7 @@ AI content planning tool for the YouTube channel "이슈털이".
 
 Current scope:
 - Static MVP frontend
+- Optional Next.js + React frontend in `frontend/web`
 - HTTP JSON API
 - In-memory repository
 - Default fake-agent shorts planning pipeline
@@ -13,6 +14,16 @@ Current scope:
 
 - Python 3.12
 - uv
+
+For a step-by-step local run guide, see [docs/RUNNING.md](docs/RUNNING.md).
+
+Main development UI:
+
+```text
+http://localhost:3000
+```
+
+The Next.js app calls same-origin `/api/...` routes, and those routes proxy to the internal Python backend at `http://127.0.0.1:8000`.
 
 ```powershell
 uv run --project . python --version
@@ -41,6 +52,22 @@ Open:
 ```text
 http://127.0.0.1:8000
 ```
+
+Run the optional Next.js frontend in another terminal:
+
+```powershell
+cd frontend/web
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://127.0.0.1:3000
+```
+
+The Next.js frontend calls the backend at `http://127.0.0.1:8000` by default. Set `NEXT_PUBLIC_API_BASE_URL` if the backend runs elsewhere.
 
 Run the demo payload:
 

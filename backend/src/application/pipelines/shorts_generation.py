@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from backend.src.application.agents.interfaces import ShortsAgentBundle
-from backend.src.domain.models import ContentProject, GenerationResult
+from backend.src.domain.models import ContentProject, GenerationResult, Timeline
 
 
 class ShortsGenerationPipeline:
@@ -20,6 +20,7 @@ class ShortsGenerationPipeline:
             project_id=project.project_id,
             video_script=script,
             storyboard=storyboard,
+            timeline=Timeline.from_scenes(project.project_id, project.output_format, storyboard.scenes),
             safety_status=safety.status,
             safety_notes=safety.notes,
             copyright_risks=safety.copyright_risks,

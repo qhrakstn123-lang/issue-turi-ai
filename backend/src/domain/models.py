@@ -69,6 +69,15 @@ class CaptureUsageMode(StrEnum):
     AVOID = "avoid"
 
 
+class BeatType(StrEnum):
+    HOOK = "hook"
+    EVIDENCE = "evidence"
+    REACTION = "reaction"
+    TURNING_POINT = "turning_point"
+    PAYOFF = "payoff"
+    CTA = "cta"
+
+
 class MotionDirection(StrEnum):
     ZOOM_IN = "zoom_in"
     PAN_LEFT = "pan_left"
@@ -265,6 +274,7 @@ class GenerationResult:
     project_id: str
     video_script: VideoScript
     storyboard: Storyboard
+    timeline: Timeline
     safety_status: SafetyStatus
     safety_notes: list[str]
     copyright_risks: list[str] = field(default_factory=list)
@@ -281,7 +291,12 @@ class GenerationResult:
         ]
         if updated_scenes == self.storyboard.scenes:
             raise ValueError(f"scene not found: {scene_id}")
-        return replace(self, storyboard=Storyboard(updated_scenes))
+        updated_storyboard = Storyboard(updated_scenes)
+        return replace(
+            self,
+            storyboard=updated_storyboard,
+            timeline=Timeline.from_scenes(self.project_id, self.timeline.output_format, updated_storyboard.scenes),
+        )
 
 
 @dataclass(frozen=True)
@@ -297,6 +312,146 @@ class TimelineScene:
     motion: str
     transition: str
     sound_effect: dict[str, float | str | None]
+    beats: list[ProductionBeat] = field(default_factory=list)
+    asset_review_checklist: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ProductionBeat:
+    beat_type: BeatType
+    start_time: float
+    end_time: float
+    text: str
+    motion: str
+    sound_effect: str
+    note: str
+
+
+def _scene_text_contains(scene: Scene, *needles: str) -> bool:
+    text = " ".join(
+        [
+            scene.scene_purpose,
+            scene.narration,
+            scene.subtitle,
+            scene.emphasis_caption,
+            scene.visual_description,
+            scene.editing_notes,
+        ]
+    ).lower()
+    return any(needle.lower() in text for needle in needles)
+
+
+def _scene_needs_evidence_beat(scene: Scene) -> bool:
+    if scene.visual_source_strategy in {
+        VisualSourceStrategy.REFERENCE_CAPTURE,
+        VisualSourceStrategy.MOCKUP,
+        VisualSourceStrategy.STOCK_ASSET,
+        VisualSourceStrategy.USER_PROVIDED,
+    }:
+        return True
+    if scene.capture_source_type not in {CaptureSourceType.AI_GENERATED, CaptureSourceType.NONE}:
+        return True
+    return scene.capture_usage_mode in {
+        CaptureUsageMode.MOCKUP_RECOMMENDED,
+        CaptureUsageMode.LICENSE_REQUIRED,
+        CaptureUsageMode.PERMISSION_REQUIRED,
+        CaptureUsageMode.AVOID,
+    }
+
+
+def _beat_note(beat_type: BeatType, scene: Scene) -> str:
+    if beat_type == BeatType.HOOK:
+        return "Open with the clearest conflict or curiosity gap in this scene."
+    if beat_type == BeatType.EVIDENCE:
+        return (
+            "Show or describe supporting material; "
+            f"strategy={scene.visual_source_strategy}, "
+            f"source={scene.capture_source_type}, "
+            f"usage={scene.capture_usage_mode}."
+        )
+    if beat_type == BeatType.REACTION:
+        return "Emphasize the audience split or comment reaction without overstating facts."
+    if beat_type == BeatType.TURNING_POINT:
+        return "Introduce the context shift or reversal that changes how viewers read the issue."
+    if beat_type == BeatType.PAYOFF:
+        return "Resolve the issue into one clear takeaway or framing point."
+    return "End with a clear viewer response prompt."
+
+
+def _build_production_beats(
+    scene: Scene,
+    start_time: float,
+    end_time: float,
+    scene_index: int,
+    scene_count: int,
+) -> list[ProductionBeat]:
+    beat_types: list[BeatType] = []
+    if scene_index == 0:
+        beat_types.append(BeatType.HOOK)
+    if _scene_needs_evidence_beat(scene):
+        beat_types.append(BeatType.EVIDENCE)
+    if _scene_text_contains(scene, "reaction", "comment", "댓글", "반응"):
+        beat_types.append(BeatType.REACTION)
+    if _scene_text_contains(scene, "turning_point", "turning point", "반전", "맥락", "전환"):
+        beat_types.append(BeatType.TURNING_POINT)
+    if _scene_text_contains(scene, "conclusion", "close", "payoff", "결론", "마무리", "정리"):
+        beat_types.append(BeatType.PAYOFF)
+    if scene_index == scene_count - 1:
+        beat_types.append(BeatType.CTA)
+
+    deduped: list[BeatType] = []
+    for beat_type in beat_types:
+        if beat_type not in deduped:
+            deduped.append(beat_type)
+
+    if not deduped:
+        return []
+
+    duration = end_time - start_time
+    text = scene.emphasis_caption.strip() or scene.subtitle.strip() or scene.narration.strip()
+    beats: list[ProductionBeat] = []
+    for index, beat_type in enumerate(deduped):
+        beat_start = round(start_time + (duration * index / len(deduped)), 2)
+        beat_end = end_time if index == len(deduped) - 1 else round(start_time + (duration * (index + 1) / len(deduped)), 2)
+        beats.append(
+            ProductionBeat(
+                beat_type=beat_type,
+                start_time=max(start_time, beat_start),
+                end_time=min(end_time, beat_end),
+                text=text,
+                motion=scene.motion_direction,
+                sound_effect=scene.sound_effect_hint,
+                note=_beat_note(beat_type, scene),
+            )
+        )
+    return beats
+
+
+def _build_asset_review_checklist(scene: Scene) -> list[str]:
+    checklist: list[str] = []
+    if scene.capture_source_type in {CaptureSourceType.COMMUNITY, CaptureSourceType.INSTAGRAM}:
+        checklist.append("Check nicknames, profile images, original comments, personal data, and defamation risk.")
+    elif scene.capture_source_type in {CaptureSourceType.NEWS, CaptureSourceType.YOUTUBE, CaptureSourceType.BROADCAST}:
+        checklist.append("Check logos, screenshot rights, and whether permission_required applies.")
+    elif scene.capture_source_type == CaptureSourceType.GOOGLE_IMAGE:
+        checklist.append("Confirm license_required before using any Google image material.")
+    elif scene.capture_source_type == CaptureSourceType.STOCK_SITE:
+        checklist.append("Confirm stock license, model release, and location/property release.")
+    elif scene.capture_source_type == CaptureSourceType.AI_GENERATED:
+        checklist.append("Check real person confusion, brand or character similarity, and false factual implication.")
+    elif scene.capture_source_type == CaptureSourceType.USER_PROVIDED:
+        checklist.append("Confirm usage rights, source, and permission for user-provided material.")
+
+    if scene.capture_usage_mode == CaptureUsageMode.AVOID:
+        checklist.append("Do not use this source as-is; replace it or create a safer alternative.")
+    if scene.capture_usage_mode == CaptureUsageMode.LICENSE_REQUIRED:
+        checklist.append("Verify license_required status before publishing.")
+    if scene.capture_usage_mode == CaptureUsageMode.PERMISSION_REQUIRED:
+        checklist.append("Verify permission_required status before publishing.")
+    if scene.asset_usage_note.strip():
+        checklist.append(f"Asset note: {scene.asset_usage_note.strip()}")
+
+    return checklist
 
 
 @dataclass(frozen=True)
@@ -331,6 +486,8 @@ class Timeline:
                     motion=scene.motion_direction,
                     transition=scene.transition,
                     sound_effect={"type": scene.sound_effect_hint, "start_time": start_time},
+                    beats=_build_production_beats(scene, start_time, end_time, len(timeline_scenes), len(scenes)),
+                    asset_review_checklist=_build_asset_review_checklist(scene),
                 )
             )
             cursor = end_time

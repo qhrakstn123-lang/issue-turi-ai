@@ -3,120 +3,58 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>이슈털이 쇼츠 플래너</title>
+    <title>ShortsFlow legacy frontend notice</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
-    <main class="shell">
-      <section class="workspace">
-        <form id="project-form" class="input-panel">
-          <div class="panel-heading">
-            <h1>이슈털이 쇼츠 플래너</h1>
-            <span id="status-pill" class="status-pill">대기</span>
-          </div>
+  <body class="legacy-notice-page">
+    <main class="legacy-shell" aria-labelledby="legacy-title">
+      <section class="legacy-card">
+        <p class="legacy-eyebrow">Legacy / Deprecated</p>
+        <h1 id="legacy-title">ShortsFlow Next.js frontend를 사용하세요</h1>
+        <p class="legacy-copy">
+          이 주소는 backend API 서버와 legacy 정적 안내 화면입니다. 실제 ShortsFlow 작업 화면은
+          Next.js 앱에서 확인합니다.
+        </p>
 
-          <label>
-            주제
-            <textarea id="topic" name="topic" rows="4" required>커뮤니티에서 반응이 갈린 카페 주문 사건</textarea>
-          </label>
-
-          <div class="field-grid">
-            <label>
-              타깃
-              <input id="target_audience" name="target_audience" value="이슈 쇼츠 시청자" />
-            </label>
-            <label>
-              톤
-              <input id="tone" name="tone" value="빠르고 친근한 썰체" />
-            </label>
-            <label>
-              스타일
-              <select id="style_template_id" name="style_template_id">
-                <option value="issue_turi_basic">이슈털이 기본형</option>
-                <option value="issue_summary">이슈 요약형</option>
-                <option value="controversy_roundup">논란 정리형</option>
-              </select>
-            </label>
-            <label>
-              길이
-              <input id="video_length_seconds" name="video_length_seconds" type="number" min="40" max="60" value="50" />
-            </label>
+        <div class="legacy-status-grid" aria-label="현재 프론트엔드 구조">
+          <div>
+            <span>Backend API</span>
+            <strong>http://127.0.0.1:8000</strong>
           </div>
-
-          <button type="submit">생성</button>
-        </form>
-
-        <section class="result-panel">
-          <div class="panel-heading">
-            <h2 id="script-title">생성 결과</h2>
-            <span id="safety-status" class="status-pill muted">검토 전</span>
+          <div>
+            <span>Main UI</span>
+            <strong>http://localhost:3000</strong>
           </div>
-          <div class="result-actions">
-            <button id="download-json" class="secondary-button" type="button" hidden>Download JSON</button>
+          <div>
+            <span>Legacy UI</span>
+            <strong>frontend/app</strong>
           </div>
-          <section id="result-summary" class="summary-grid" aria-label="생성 요약"></section>
-          <section id="safety-review" class="safety-review" aria-label="안전 검토"></section>
-          <ol id="scene-list" class="scene-list"></ol>
+        </div>
+
+        <section class="legacy-steps" aria-label="실행 방법">
+          <h2>실행 방법</h2>
+          <ol>
+            <li>
+              <span>backend</span>
+              <code>uv run --project . python -m backend.src.presentation.http.server</code>
+            </li>
+            <li>
+              <span>frontend</span>
+              <code>cd frontend/web &amp;&amp; npm run dev</code>
+            </li>
+            <li>
+              <span>browser</span>
+              <code>http://localhost:3000</code>
+              <small>또는 Next.js dev server가 안내하는 실제 포트</small>
+            </li>
+          </ol>
         </section>
+
+        <p class="legacy-note">
+          앞으로 UI 작업은 <code>frontend/web</code>에서만 진행합니다. <code>frontend/app</code>은
+          삭제하지 않고 legacy static frontend로 보존하며 신규 기능을 추가하지 않습니다.
+        </p>
       </section>
     </main>
-
-    <template id="scene-template">
-      <li class="scene-row">
-        <div class="scene-meta">
-          <strong class="scene-purpose"></strong>
-          <span class="scene-duration"></span>
-        </div>
-        <div class="scene-sections">
-          <section class="scene-section scene-script">
-            <h3>Script</h3>
-            <p class="scene-narration"></p>
-          </section>
-
-          <section class="scene-section scene-subtitle-block">
-            <h3>Subtitle</h3>
-            <div class="scene-tags">
-              <span class="scene-subtitle"></span>
-              <span class="scene-emphasis"></span>
-            </div>
-          </section>
-
-          <section class="scene-section scene-visual">
-            <h3>Visual</h3>
-            <dl class="field-list">
-              <div><dt>Type</dt><dd class="scene-visual-type"></dd></div>
-              <div><dt>Description</dt><dd class="scene-visual-description"></dd></div>
-              <div><dt>GIF/Clip</dt><dd class="scene-gif-suggestion"></dd></div>
-            </dl>
-            <div class="keyword-list scene-keywords"></div>
-            <details class="prompt-details">
-              <summary>Generated image prompt</summary>
-              <pre class="scene-image-prompt"></pre>
-            </details>
-          </section>
-
-          <section class="scene-section scene-sourcing">
-            <h3>Sourcing</h3>
-            <div class="scene-tags">
-              <span class="scene-source-strategy"></span>
-              <span class="scene-capture-source"></span>
-              <span class="scene-capture-usage"></span>
-            </div>
-            <p class="asset-note"></p>
-          </section>
-
-          <section class="scene-section scene-editing">
-            <h3>Editing</h3>
-            <div class="scene-tags">
-              <span class="scene-motion"></span>
-              <span class="scene-sound"></span>
-            </div>
-            <p class="scene-notes"></p>
-          </section>
-        </div>
-      </li>
-    </template>
-
-    <script src="./app.js"></script>
   </body>
 </html>

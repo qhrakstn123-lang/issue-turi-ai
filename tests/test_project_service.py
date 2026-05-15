@@ -34,6 +34,11 @@ class ProjectServiceTests(unittest.TestCase):
         self.assertEqual(updated.status, ProjectStatus.READY_FOR_REVIEW)
         self.assertEqual(updated.generation_result.storyboard.scenes[0].subtitle, "댓글 갈린 공지")
         self.assertEqual(updated.generation_result.storyboard.scenes[0].motion_direction, "shake")
+        self.assertEqual(updated.generation_result.timeline.scenes[0].beats[0].motion, "shake")
+        self.assertEqual(
+            updated.generation_result.timeline.scenes[0].subtitle["text"],
+            updated.generation_result.storyboard.scenes[0].subtitle,
+        )
 
 
 if __name__ == "__main__":

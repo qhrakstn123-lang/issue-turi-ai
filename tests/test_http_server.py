@@ -38,9 +38,37 @@ class HttpServerTests(unittest.TestCase):
             server.server_close()
 
         self.assertEqual(html_response.status, 200)
-        self.assertIn("이슈털이 쇼츠 플래너", html)
+        self.assertIn("ShortsFlow Next.js frontend를 사용하세요", html)
         self.assertEqual(api_response.status, 201)
         self.assertEqual(api_payload["project"]["output_format"], "youtube_shorts")
+
+    def test_server_allows_next_frontend_cors_preflight(self):
+        server = create_server("127.0.0.1", 0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        port = server.server_address[1]
+
+        try:
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+            connection.request(
+                "OPTIONS",
+                "/api/projects",
+                headers={
+                    "Origin": "http://127.0.0.1:3000",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                },
+            )
+            response = connection.getresponse()
+            response.read()
+        finally:
+            server.shutdown()
+            server.server_close()
+
+        self.assertEqual(response.status, 204)
+        self.assertEqual(response.getheader("Access-Control-Allow-Origin"), "*")
+        self.assertIn("POST", response.getheader("Access-Control-Allow-Methods"))
+        self.assertIn("Content-Type", response.getheader("Access-Control-Allow-Headers"))
 
 
 if __name__ == "__main__":

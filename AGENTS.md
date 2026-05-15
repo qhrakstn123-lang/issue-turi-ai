@@ -224,3 +224,12 @@ When refactoring:
 - provide the next recommended step
 
 Do not combine structural refactor with real AI integration in the same change.
+
+## Documentation Rules
+
+Keep project documentation current:
+- When an important troubleshooting issue happens, record it in `docs/TROUBLESHOOTING.md`.
+- When a major feature or milestone is completed, update `docs/DEVELOPMENT_LOG.md`.
+- When architecture, provider modes, pipeline structure, or technical stack changes, update `docs/TECH_STACK.md`.
+- Documentation-only tasks must not change feature code, API behavior, frontend behavior, prompts, or tests unless explicitly requested.
+- Do not record API keys, secrets, or `.env` values in documentation.

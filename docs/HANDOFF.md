@@ -20,6 +20,15 @@ Not implemented yet:
 - database persistence
 - upload/deployment/payment flows
 
+Recently added:
+- Browser preview shows visual sourcing and safety review details.
+- Browser-only JSON download exports the current `GenerationResult`.
+- Optional Next.js + React + TypeScript frontend exists under `frontend/web`.
+- `frontend/web` has been redesigned as a ShortsFlow dark-mode SaaS planning studio.
+- `GenerationResult.timeline` is now returned by the backend and shown in the Next.js `TimelinePanel`.
+- The Next.js app now uses same-origin `/api/...` routes on `localhost:3000`; those route handlers proxy to the internal Python backend at `127.0.0.1:8000`.
+- Timeline scenes now include rule-based production beats and an asset review checklist.
+
 ## Must Read First
 
 Read these before making changes:
@@ -29,6 +38,9 @@ Read these before making changes:
 - `README.md`
 - `docs/HANDOFF.md`
 - `docs/current-project-state.md`
+- `docs/TECH_STACK.md`
+- `docs/TROUBLESHOOTING.md`
+- `docs/DEVELOPMENT_LOG.md`
 
 ## Test Command
 
@@ -37,6 +49,44 @@ uv run --project . --with pytest pytest -q
 ```
 
 Automated tests must not call real OpenAI or any external API.
+
+## Frontend Options
+
+Static MVP frontend:
+
+```powershell
+uv run --project . python -m backend.src.presentation.http.server
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Optional Next.js frontend:
+
+```powershell
+cd frontend/web
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+The Next.js app uses same-origin `/api/...` calls by default. The browser should stay on `http://localhost:3000`; Next route handlers proxy API traffic to the internal Python backend. Set `BACKEND_API_BASE_URL` only if the backend runs somewhere other than `http://127.0.0.1:8000`.
+
+## Project Documentation
+
+- `docs/current-project-state.md`: beginner-friendly summary of what currently runs and what the web page does.
+- `docs/RUNNING.md`: local backend, static frontend, and Next.js frontend running guide.
+- `docs/TECH_STACK.md`: technical stack, architecture, pipeline, provider modes, test/smoke commands, and excluded features.
+- `docs/TROUBLESHOOTING.md`: dated issue records with symptoms, causes, fixes, verification, and prevention notes.
+- `docs/DEVELOPMENT_LOG.md`: chronological development log with changed files, verification, and next steps.
 
 ## Manual Real Smoke
 
@@ -89,6 +139,23 @@ Important tests:
 - `tests/conftest.py`
 
 `tests/conftest.py` removes `ISSUE_TURI_LLM_PROVIDER`, `OPENAI_API_KEY`, and `OPENAI_MODEL` for each test so local real-mode environment variables do not leak into fake-mode tests.
+
+## Recommended Next Step
+
+Recommended next step: refine upload/publishing readiness before DB persistence.
+
+Reason:
+- The project already produces rich scene-level planning data.
+- Timeline now includes scene timing, production beats, and asset review checklist data.
+- Publishing readiness can turn the plan into a practical pre-upload safety/originality checklist.
+- DB persistence is useful, but storing data before the timeline contract is stable may create migration churn.
+
+Concrete next slice:
+- Add publishing readiness fields such as originality risk, reused-content risk, monetization risk, and required human checks.
+- Keep it as planning data only; do not add image generation, TTS, or MP4 rendering yet.
+- Keep it as planning data only; do not add image generation, TTS, or MP4 rendering yet.
+
+Alternative next step: DB persistence with SQLite if the immediate need is to preserve generated projects and edited scenes between browser sessions.
 
 ## Visual Sourcing Strategy
 

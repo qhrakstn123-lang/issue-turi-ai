@@ -1,5 +1,31 @@
 # Issue Turi AI Tech Stack
 
+## 2026-05-15 Timeline Update
+
+The timeline builder now includes production beats and asset review checklist data.
+
+- Backend generation now returns `GenerationResult.timeline`.
+- The pipeline builds the timeline from the final storyboard scenes.
+- Scene patching rebuilds the timeline so edited scene durations remain reflected.
+- The Next.js preview includes a read-only `TimelinePanel`.
+- `TimelineScene.beats` contains rule-based shorts production beats: `hook`, `evidence`, `reaction`, `turning_point`, `payoff`, and `cta`.
+- `TimelineScene.asset_review_checklist` contains rule-based human review items derived from visual sourcing fields.
+- This is still a planning layer, not rendering. Image generation, TTS, and MP4 export remain out of scope.
+
+Recommended next technical step: add publishing readiness checks before DB persistence or render jobs.
+
+## 2026-05-15 Next.js API Proxy Update
+
+The browser-facing development app is now `http://localhost:3000`.
+
+- `frontend/web/lib/api.ts` calls same-origin `/api/...` by default.
+- `frontend/web/app/api/[...path]/route.ts` proxies those requests to the internal Python backend.
+- The default internal backend target is `http://127.0.0.1:8000`.
+- Use `BACKEND_API_BASE_URL` to change the internal backend target.
+- `NEXT_PUBLIC_API_BASE_URL` remains available only for special cases where direct browser calls are intentionally wanted.
+
+This keeps the user-facing UI on one port while preserving the existing Python backend and layered architecture.
+
 ## 프로젝트 개요
 
 Issue Turi AI는 유튜브 채널 "이슈털이"를 위한 쇼츠 기획 MVP입니다.
@@ -16,6 +42,7 @@ topic input
 -> visual sourcing suggestions
 -> editing directions
 -> safety review
+-> timeline builder data
 -> browser preview
 -> JSON download
 ```
@@ -61,18 +88,103 @@ frontend
 
 ## 프론트엔드 구조
 
-프론트엔드는 `frontend/app` 아래의 정적 HTML/CSS/JS입니다.
+프론트엔드는 두 가지가 공존합니다.
+
+1. `frontend/app`: 기존 정적 HTML/CSS/JS MVP
+2. `frontend/web`: 새 Next.js + React + TypeScript 앱
 
 - `frontend/app/index.html`: 입력 폼, 결과 summary, safety review, scene 카드 template, JSON 다운로드 버튼
 - `frontend/app/app.js`: API 호출, 결과 렌더링, safety/visual/sourcing 표시, JSON 다운로드
 - `frontend/app/styles.css`: MVP 화면 스타일
 
-사용 중인 프론트엔드 프레임워크는 없습니다.
+`frontend/web` 구조:
 
-- Next.js 없음
-- React 없음
-- Vue 없음
-- 빌드 단계 없음
+- `frontend/web/app`: Next.js App Router entry
+- `frontend/web/app/page.tsx`: project 생성, shorts plan 생성, result state 관리
+- `frontend/web/app/layout.tsx`: root layout
+- `frontend/web/app/globals.css`: ShortsFlow dark-mode SaaS 디자인 시스템과 모바일 우선 반응형 스타일
+- `frontend/web/components`: React component 분리
+- `frontend/web/lib/api.ts`: backend API 호출
+- `frontend/web/lib/types.ts`: API response와 domain result 타입
+
+Next.js app components:
+
+- `ProjectForm`
+- `ResultSummary`
+- `SafetyReviewPanel`
+- `SceneCard`
+- `VisualSection`
+- `SourcingSection`
+- `EditingSection`
+- `TimelinePanel`
+- `JsonDownloadButton`
+
+기존 정적 UI는 유지됩니다. 새 React 앱은 `frontend/web` 아래에 별도로 추가되었습니다.
+
+`frontend/web`의 현재 브랜드/UI 방향:
+
+- 서비스명: ShortsFlow
+- 서브타이틀: AI Shorts Planning Studio
+- 메인 카피: Plan better. Create faster. Grow bigger.
+- 다크모드 SaaS shell
+- 좌측 sidebar navigation
+- 상단 search/action bar
+- planner form card
+- result summary cards
+- safety review panel
+- scene editor cards
+- placeholder/disabled UI는 `Coming soon`으로 표시
+
+실제 동작하는 기능:
+
+- project 생성 요청
+- shorts plan 생성 요청
+- result summary 표시
+- safety review 표시
+- scene detail 표시
+- visual/sourcing/editing 표시
+- generated image prompt 접기/펼치기
+- stock keyword tag 표시
+- JSON 다운로드
+
+placeholder UI:
+
+- Projects
+- Templates
+- AI Ideator
+- Script & Hook
+- Scenes
+- Assets
+- Analytics
+- Settings
+- New Project
+- video preview / image generation / TTS / MP4 rendering
+
+Next.js frontend 실행:
+
+```powershell
+cd frontend/web
+npm install
+npm run dev
+```
+
+기본 URL:
+
+```text
+http://127.0.0.1:3000
+```
+
+backend API 기본 주소:
+
+```text
+http://127.0.0.1:8000
+```
+
+다른 backend 주소를 쓰려면:
+
+```powershell
+$env:NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
+```
 
 브라우저 동작 흐름:
 
@@ -128,6 +240,13 @@ backend/src/domain
 - `Storyboard`
 - `GenerationResult`
 - `Timeline`
+
+Current timeline state:
+
+- `GenerationResult` includes a `timeline` field.
+- `Timeline.from_scenes(...)` converts generated scenes into ordered edit timing.
+- Timeline scenes include `start_time`, `end_time`, `duration`, subtitle timing, emphasis-caption timing, motion, transition, visual asset metadata, narration-audio placeholder, and sound-effect timing.
+- The timeline is still a planning contract only. It does not generate audio, images, or MP4 files.
 
 주요 enum:
 

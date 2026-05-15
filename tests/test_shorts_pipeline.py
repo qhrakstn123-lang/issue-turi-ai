@@ -94,6 +94,28 @@ class ShortsGenerationPipelineTests(unittest.TestCase):
         self.assertEqual(first_scene.sound_effect_hint, "pop")
         self.assertIn("카페 주문 사건", result.video_script.title)
 
+    def test_pipeline_builds_timeline_from_generated_scenes(self):
+        project = ContentProject.create(
+            topic="reference style shorts planning",
+            target_audience="shorts viewers",
+            tone="fast",
+            style_template_id="issue_turi_basic",
+            video_length_seconds=48,
+            output_format=OutputFormat.YOUTUBE_SHORTS,
+        )
+
+        result = ShortsGenerationPipeline(create_fake_agent_bundle()).generate(project)
+
+        self.assertEqual(result.timeline.project_id, project.project_id)
+        self.assertEqual(result.timeline.output_format, OutputFormat.YOUTUBE_SHORTS)
+        self.assertEqual(result.timeline.aspect_ratio, "9:16")
+        self.assertEqual(result.timeline.scenes[0].scene_id, result.storyboard.scenes[0].scene_id)
+        self.assertEqual(result.timeline.scenes[0].start_time, 0.0)
+        self.assertEqual(
+            result.timeline.total_duration,
+            round(sum(scene.estimated_duration for scene in result.storyboard.scenes), 2),
+        )
+
     def test_pipeline_marks_rumor_like_topics_for_review(self):
         project = ContentProject.create(
             topic="확인 안 된 루머로 유명인을 비난하는 사건",

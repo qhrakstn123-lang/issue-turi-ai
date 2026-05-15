@@ -1,5 +1,100 @@
 # Issue Turi AI Development Log
 
+## 2026-05-15
+
+### 작업 내용
+
+Timeline에 rule-based Shorts production beat와 scene별 asset review checklist를 추가했다. 새 LLM agent, prompt, 외부 API, 이미지/TTS/MP4 기능은 추가하지 않았다.
+
+### 변경 파일
+
+- `backend/src/domain/models.py`
+- `frontend/web/lib/types.ts`
+- `frontend/web/components/TimelinePanel.tsx`
+- `frontend/web/app/globals.css`
+- `tests/test_domain_models.py`
+- `tests/test_project_service.py`
+- `tests/test_next_frontend.py`
+- `docs/HANDOFF.md`
+- `docs/TECH_STACK.md`
+- `docs/DEVELOPMENT_LOG.md`
+
+### 검증 결과
+
+```text
+uv run --project . --with pytest pytest -q: 101 passed, 37 subtests passed
+npm.cmd run typecheck: succeeded
+npm.cmd run lint: no warnings or errors
+npm.cmd run build: succeeded
+```
+
+### 다음 단계
+
+Publishing readiness check를 추가해 원본성, reused-content 위험, 수익화 위험, 사람 검토 항목을 업로드 전 단계에서 구조화한다.
+
+## 2026-05-15
+
+### 작업 내용
+
+Next.js frontend를 `localhost:3000` 중심으로 통합했다. 브라우저는 더 이상 Python backend `8000`을 직접 호출하지 않고, Next.js의 same-origin `/api/...` route handler를 통해 backend로 proxy한다.
+
+### 변경 파일
+
+- `frontend/web/app/api/[...path]/route.ts`
+- `frontend/web/lib/api.ts`
+- `tests/test_next_frontend.py`
+- `README.md`
+- `docs/RUNNING.md`
+- `docs/HANDOFF.md`
+- `docs/TECH_STACK.md`
+
+### 검증 결과
+
+```text
+uv run --project . --with pytest pytest tests/test_next_frontend.py::NextFrontendTests::test_next_frontend_scaffold_exists_without_replacing_static_frontend tests/test_next_frontend.py::NextFrontendTests::test_next_frontend_uses_required_components_and_api_base_url -q: 2 passed, 9 subtests passed
+npm.cmd run typecheck: succeeded
+npm.cmd run lint: no warnings or errors
+npm.cmd run build: succeeded
+```
+
+### 다음 단계
+
+사용자는 `http://localhost:3000`만 확인하도록 안내한다. Python backend는 내부 API engine으로 유지하고, 실행 편의를 위해 추후 `scripts/run-dev.bat`를 추가할 수 있다.
+
+## 2026-05-15
+
+### 작업 내용
+
+Timeline builder의 첫 번째 backend/frontend slice를 추가했다. 생성 결과가 이제 scene 목록뿐 아니라 실제 편집 순서를 나타내는 `timeline` 데이터를 포함한다.
+
+### 변경 파일
+
+- `backend/src/domain/models.py`
+- `backend/src/application/pipelines/shorts_generation.py`
+- `frontend/web/lib/types.ts`
+- `frontend/web/app/page.tsx`
+- `frontend/web/app/globals.css`
+- `frontend/web/components/ResultSummary.tsx`
+- `frontend/web/components/TimelinePanel.tsx`
+- `tests/test_shorts_pipeline.py`
+- `tests/test_http_api.py`
+- `tests/test_next_frontend.py`
+- `docs/TECH_STACK.md`
+- `docs/HANDOFF.md`
+
+### 검증 결과
+
+```text
+npm.cmd run typecheck: succeeded
+npm.cmd run lint: no warnings or errors
+npm.cmd run build: succeeded
+uv run --project . --with pytest pytest -q: 95 passed, 32 subtests passed
+```
+
+### 다음 단계
+
+Timeline을 더 세밀한 production grammar와 asset-review checklist로 확장한다. DB persistence는 그 다음에 붙이는 것이 좋다.
+
 이 문서는 주요 개발 흐름을 시간순으로 기록합니다. 새 세션에서 현재 상태를 빠르게 파악하거나 발표/PPT 자료를 만들 때 참고합니다.
 
 ## 2026-05-14
@@ -298,6 +393,105 @@ Preview UI를 확장했다.
 ### 다음 단계
 
 생성 결과를 파일로 보관할 수 있게 JSON 다운로드를 추가한다.
+
+## 2026-05-14
+
+### 작업 내용
+
+`frontend/web`를 ShortsFlow 다크모드 SaaS UI로 리디자인했다.
+
+### 변경 파일
+
+- `frontend/web/app/layout.tsx`
+- `frontend/web/app/page.tsx`
+- `frontend/web/app/globals.css`
+- `tests/test_next_frontend.py`
+- `docs/HANDOFF.md`
+- `docs/TECH_STACK.md`
+- `docs/DEVELOPMENT_LOG.md`
+
+### 검증 결과
+
+기존 static frontend와 backend API는 유지하고, Next.js 앱만 ShortsFlow 브랜드 작업 화면으로 변경했다. 좌측 sidebar, 상단 search/action bar, hero panel, summary cards, safety review, scene cards, placeholder UI를 다크모드 SaaS 스타일로 정리했다.
+
+검증 명령:
+
+```powershell
+cd frontend/web
+npm.cmd run build
+npm.cmd run lint
+npm.cmd run typecheck
+cd ../..
+uv run --project . --with pytest pytest -q
+```
+
+검증 결과:
+
+```text
+Next.js build succeeded
+No ESLint warnings or errors
+tsc --noEmit succeeded
+94 passed, 31 subtests passed
+```
+
+### 다음 단계
+
+Timeline builder 또는 DB persistence 중 하나를 선택한다. 현재 추천은 Timeline builder다.
+
+## 2026-05-14
+
+### 작업 내용
+
+Next.js + React + TypeScript 프론트엔드 앱을 `frontend/web`에 추가했다.
+
+### 변경 파일
+
+- `frontend/web/package.json`
+- `frontend/web/app/layout.tsx`
+- `frontend/web/app/page.tsx`
+- `frontend/web/app/globals.css`
+- `frontend/web/components/ProjectForm.tsx`
+- `frontend/web/components/ResultSummary.tsx`
+- `frontend/web/components/SafetyReviewPanel.tsx`
+- `frontend/web/components/SceneCard.tsx`
+- `frontend/web/components/VisualSection.tsx`
+- `frontend/web/components/SourcingSection.tsx`
+- `frontend/web/components/EditingSection.tsx`
+- `frontend/web/components/JsonDownloadButton.tsx`
+- `frontend/web/lib/api.ts`
+- `frontend/web/lib/types.ts`
+- `tests/test_next_frontend.py`
+- `README.md`
+- `docs/HANDOFF.md`
+- `docs/TECH_STACK.md`
+
+### 검증 결과
+
+기존 static frontend를 유지하면서 Next.js App Router 기반 preview UI를 병렬로 추가했다. API 호출은 `lib/api.ts`, 타입은 `lib/types.ts`, 화면은 React components로 분리했다.
+
+검증 명령:
+
+```powershell
+uv run --project . --with pytest pytest -q
+cd frontend/web
+npm.cmd install
+npm.cmd run build
+npm.cmd run lint
+npm.cmd run typecheck
+```
+
+검증 결과:
+
+```text
+93 passed, 31 subtests passed
+Next.js build succeeded
+No ESLint warnings or errors
+tsc --noEmit succeeded
+```
+
+### 다음 단계
+
+이후 Timeline builder 또는 DB persistence 작업으로 넘어간다.
 
 ## 2026-05-14
 

@@ -98,6 +98,8 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(patch_status, 200)
         self.assertEqual(get_status, 200)
         self.assertEqual(len(generate_payload["result"]["storyboard"]["scenes"]), 8)
+        self.assertEqual(generate_payload["result"]["timeline"]["aspect_ratio"], "9:16")
+        self.assertEqual(generate_payload["result"]["timeline"]["scenes"][0]["start_time"], 0.0)
         self.assertEqual(
             patch_payload["project"]["generation_result"]["storyboard"]["scenes"][0]["subtitle"],
             "반응 갈린 안내문",

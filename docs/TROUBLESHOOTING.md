@@ -1,5 +1,79 @@
 # Issue Turi AI Troubleshooting
 
+## 2026-05-15. Browser should use port 3000 only
+
+### 증상
+
+사용자가 `http://localhost:3000`에서 ShortsFlow UI를 보고 있는데도 `AI 기획 생성` 시 `Failed to fetch`가 표시됐다. `8000`과 `3000`이 따로 노는 것처럼 보였다.
+
+### 원인
+
+기존 `frontend/web/lib/api.ts`가 browser에서 직접 `http://127.0.0.1:8000`으로 API를 호출했다. 이 구조는 CORS, stale backend process, duplicate backend process가 있을 때 사용자가 문제를 이해하기 어렵다.
+
+### 해결
+
+Next.js App Router에 `frontend/web/app/api/[...path]/route.ts` proxy route를 추가했다. 이제 frontend는 기본적으로 same-origin `/api/...`를 호출하고, Next.js server가 내부 Python backend `http://127.0.0.1:8000`으로 전달한다.
+
+### 검증 명령어
+
+```powershell
+uv run --project . --with pytest pytest tests/test_next_frontend.py::NextFrontendTests::test_next_frontend_scaffold_exists_without_replacing_static_frontend tests/test_next_frontend.py::NextFrontendTests::test_next_frontend_uses_required_components_and_api_base_url -q
+cd frontend/web
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run build
+```
+
+### 결과
+
+```text
+2 passed, 9 subtests passed
+tsc --noEmit succeeded
+next lint: No ESLint warnings or errors
+next build succeeded
+```
+
+### 재발 방지
+
+브라우저에서 사용하는 app URL은 `http://localhost:3000`으로 통일한다. backend 주소가 바뀌면 browser env가 아니라 server-side `BACKEND_API_BASE_URL`을 우선 사용한다.
+
+## 2026-05-15. Next.js preview Failed to fetch from backend API
+
+### 증상
+
+`http://127.0.0.1:3000` Next.js 화면에서 `AI 기획 생성`을 누르면 대본이나 장면 결과가 나오지 않고 `Failed to fetch`가 표시됐다.
+
+### 원인
+
+Next.js frontend는 `http://127.0.0.1:3000`에서 실행되고 backend API는 `http://127.0.0.1:8000`에서 실행된다. 브라우저가 JSON `POST` 요청 전에 CORS preflight `OPTIONS` 요청을 보내는데, backend HTTP server가 `OPTIONS`를 처리하지 않아 501을 반환했다.
+
+### 해결
+
+`backend/src/presentation/http/server.py`에 `do_OPTIONS`를 추가하고 API 응답에 공통 CORS headers를 반환하도록 정리했다.
+
+### 검증 명령어
+
+```powershell
+uv run --project . --with pytest pytest tests/test_http_server.py::HttpServerTests::test_server_allows_next_frontend_cors_preflight -q
+uv run --project . --with pytest pytest -q
+cd frontend/web
+npm.cmd run typecheck
+npm.cmd run lint
+```
+
+### 결과
+
+```text
+1 passed
+96 passed, 32 subtests passed
+tsc --noEmit succeeded
+next lint: No ESLint warnings or errors
+```
+
+### 재발 방지
+
+Next.js처럼 다른 origin에서 backend API를 호출하는 화면을 추가할 때는 `OPTIONS` preflight와 `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`를 함께 테스트한다.
+
 이 문서는 작업 중 발생한 문제, 원인, 해결, 검증 방법을 기록합니다. 같은 문제가 다시 나오면 먼저 이 문서를 확인합니다.
 
 ## 2026-05-14. Python 3.14 대신 3.12 사용 문제
@@ -328,3 +402,108 @@ uv run --project . --with pytest pytest -q
 - `.env`와 API key를 커밋하지 않는다.
 - 테스트에 real OpenAI 호출을 넣지 않는다.
 - real mode 실행 전 비용 발생 가능성을 확인한다.
+
+## 2026-05-14. PowerShell에서 `npm install` 실행 정책 오류
+
+### 증상
+
+`frontend/web`에서 `npm install` 실행 시 다음 오류가 발생했다.
+
+```text
+npm.ps1 cannot be loaded because running scripts is disabled on this system
+```
+
+### 원인
+
+Windows PowerShell execution policy가 `npm.ps1` 실행을 막았다.
+
+### 해결
+
+PowerShell script shim 대신 `npm.cmd`를 사용했다.
+
+```powershell
+npm.cmd install
+```
+
+### 검증 명령어
+
+```powershell
+npm.cmd --version
+npm.cmd install
+```
+
+### 결과
+
+`npm.cmd`는 PowerShell script execution policy에 막히지 않고 실행된다.
+
+### 재발 방지
+
+- Windows PowerShell에서는 npm 명령이 막히면 `npm.cmd`를 사용한다.
+- 문서와 자동화 예시는 Windows에서 `npm.cmd` fallback을 고려한다.
+
+## 2026-05-14. npm cache only mode로 dependency 설치 실패
+
+### 증상
+
+`npm.cmd install` 첫 실행이 다음 오류로 실패했다.
+
+```text
+ENOTCACHED
+cache mode is 'only-if-cached' but no cached response is available
+```
+
+### 원인
+
+sandbox 환경에서 네트워크 접근이 제한되어 npm registry에서 dependency를 받을 수 없었다.
+
+### 해결
+
+사용자 승인 후 네트워크가 가능한 권한으로 `npm.cmd install`을 다시 실행했다.
+
+### 검증 명령어
+
+```powershell
+npm.cmd install
+```
+
+### 결과
+
+Next.js, React, TypeScript, ESLint dependencies가 설치되고 `package-lock.json`이 생성되었다.
+
+### 재발 방지
+
+- 새 npm dependency 설치가 필요하면 네트워크 승인이 필요할 수 있음을 예상한다.
+- 설치 후 `node_modules`는 커밋하지 않는다.
+
+## 2026-05-14. Next.js build 중 `spawn EPERM`
+
+### 증상
+
+`npm.cmd run build` 실행 시 다음 오류가 발생했다.
+
+```text
+Error: spawn EPERM
+```
+
+### 원인
+
+Next.js production build가 worker child process를 spawn하는 과정에서 sandbox 권한 제한에 걸렸다.
+
+### 해결
+
+사용자 승인 후 권한 상승으로 같은 build 명령을 다시 실행했다.
+
+### 검증 명령어
+
+```powershell
+npm.cmd run build
+```
+
+### 결과
+
+Next.js production build가 성공했다.
+
+### 재발 방지
+
+- Next.js build가 `spawn EPERM`으로 실패하면 코드 오류와 권한 오류를 구분한다.
+- 권한 문제로 확인되면 같은 명령을 승인받아 재실행한다.
