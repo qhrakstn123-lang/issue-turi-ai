@@ -1,5 +1,6 @@
 import { AssetCandidateRegister } from "./AssetCandidateRegister";
-import type { AssetSourceCandidate, GenerationResult, SourceBrief } from "../lib/types";
+import { SourceCapturePlanList } from "./SourceCapturePlanList";
+import type { AssetSourceCandidate, GenerationResult, SourceBrief, SourceCapturePlan } from "../lib/types";
 
 type TimelinePanelProps = {
   result: GenerationResult;
@@ -8,6 +9,7 @@ type TimelinePanelProps = {
   onUpdateAssetCandidate: (assetCandidateId: string, updates: Partial<AssetSourceCandidate>) => void;
   onDeleteAssetCandidate: (assetCandidateId: string) => void;
   sourceBrief?: SourceBrief | null;
+  sourceCapturePlans?: SourceCapturePlan[];
 };
 
 function formatTime(seconds: number) {
@@ -21,6 +23,7 @@ export function TimelinePanel({
   onUpdateAssetCandidate,
   onDeleteAssetCandidate,
   sourceBrief = null,
+  sourceCapturePlans = [],
 }: TimelinePanelProps) {
   const timeline = result.timeline;
 
@@ -69,6 +72,8 @@ export function TimelinePanel({
                   {scene.motion} / {scene.transition} / {scene.sound_effect.type}
                 </small>
               </div>
+
+              <SourceCapturePlanList plans={sourceCapturePlans} sceneId={scene.scene_id} />
 
               <details className="timeline-details">
                 <summary>제작 beat {beats.length}</summary>

@@ -8,7 +8,13 @@
 
 제품 방향은 AI 이미지 중심 자동 생성이 아니라 **source-capture-first workflow**입니다. 커뮤니티, 뉴스, 유튜브, 방송, 인스타그램, 구글 이미지 reference, stock, user-provided 자료를 먼저 고려하고, AI 이미지는 원본 자료가 부족하거나 대체 컷/배경 컷이 필요할 때 쓰는 보조 수단입니다.
 
-다음 기능 작업 전에는 [docs/SOURCE_FIRST_WORKFLOW.md](SOURCE_FIRST_WORKFLOW.md)를 먼저 확인합니다.
+다음 기능 작업 전에는 다음 문서를 먼저 확인합니다.
+
+- [docs/SOURCE_FIRST_WORKFLOW.md](SOURCE_FIRST_WORKFLOW.md)
+- [docs/UI_DESIGN_GUIDE.md](UI_DESIGN_GUIDE.md)
+- [docs/FRONTEND_BACKEND_CONTRACT.md](FRONTEND_BACKEND_CONTRACT.md)
+
+`frontend/web` UI 작업은 `.agents/skills/shortsflow-ui-designer/SKILL.md`를 따릅니다.
 
 ## 현재 주 UI
 
@@ -25,12 +31,6 @@ Next.js dev server가 다른 포트를 배정하면 터미널에 표시된 실�
 ## Legacy Frontend
 
 `frontend/app`은 삭제하지 않고 legacy 안내/호환 페이지로 유지합니다.
-
-역할:
-
-- Python backend가 직접 서빙할 수 있는 legacy 안내 화면
-- 간단한 정적 fallback
-- 기존 테스트 호환성 유지
 
 신규 제품 UI 기능은 `frontend/app`에 추가하지 않습니다. 앞으로 UI 작업은 `frontend/web` 기준으로 진행합니다.
 
@@ -94,11 +94,9 @@ RealScriptWriterAgent
 -> RealSafetyReviewAgent
 ```
 
-각 agent는 자기 책임 필드만 수정합니다. Safety review는 scene을 직접 수정하지 않고 `GenerationResult`의 safety 필드만 업데이트합니다.
+## 현재 구현된 계획 데이터
 
-## GenerationResult 내용
-
-현재 생성 결과는 다음 계획 데이터를 포함합니다.
+현재 생성 결과는 다음 데이터를 포함합니다.
 
 - 쇼츠 제목과 전체 내레이션 방향
 - scene별 storyboard
@@ -125,7 +123,7 @@ Timeline은 planning contract입니다. 실제 음성, 이미지, MP4 파일은 
 - `source_context`
 - `source_angle`
 
-`source_context`는 사용자가 직접 요약하거나 붙여넣은 텍스트입니다. URL을 입력해도 ShortsFlow는 외부 사이트를 자동으로 fetch, crawl, download, screenshot하지 않습니다.
+`source_context`는 사용자가 직접 요약하거나 붙여넣은 텍스트입니다. URL을 입력해도 ShortsFlow는 외부 사이트를 자동으로 fetch, crawl, download, search, screenshot하지 않습니다.
 
 source-first 입력이 있으면 브라우저 상태와 JSON 다운로드에 `source_brief`가 포함되고, 초기 `asset_source_candidate`가 하나 생성됩니다. 이 후보는 사용 승인 상태가 아니며 source type에 따라 blur, rewrite, license, permission review 기본값이 적용됩니다.
 
@@ -134,20 +132,6 @@ source-first 입력이 있으면 브라우저 상태와 JSON 다운로드에 `so
 `frontend/web`에는 scene별 frontend-only Manual Asset Register가 있습니다.
 
 사용자는 `AssetSourceCandidate`를 추가, 수정, 승인, 삭제할 수 있습니다.
-
-주요 필드:
-
-- `asset_candidate_id`
-- `scene_id`
-- `source_type`
-- `source_url`
-- `source_title`
-- `usage_mode`
-- `license_status`
-- `needs_blur`
-- `needs_rewrite`
-- `approved_for_use`
-- `review_notes`
 
 이 데이터는 브라우저 state입니다. DB 저장은 아직 없으므로 새로고침하면 사라집니다. JSON 다운로드에는 포함됩니다.
 
@@ -169,7 +153,37 @@ source-first 입력이 있으면 브라우저 상태와 JSON 다운로드에 `so
 
 수정은 frontend state에만 반영됩니다. backend PATCH API, DB 저장, pipeline 변경은 없습니다.
 
-수정된 scene은 `Edited` badge를 표시하고 scene 단위로 원본으로 되돌릴 수 있습니다. 수정값은 화면, timeline, summary duration, JSON 다운로드의 `generation_result`에 반영됩니다.
+## Frontend/Backend 표시 기준
+
+새 backend 필드나 frontend-only state를 추가하기 전에는 [docs/FRONTEND_BACKEND_CONTRACT.md](FRONTEND_BACKEND_CONTRACT.md)에서 표시 위치와 JSON export 반영 여부를 먼저 확인합니다.
+
+현재 주요 매핑:
+
+- `video_script`: `ResultSummary` / script overview
+- `source_brief`: Source-first Project Form / source summary / JSON export
+- `storyboard.scenes`: `SceneCard` / `SceneEditor`
+- visual fields: `VisualSection`
+- sourcing fields: `SourcingSection` / asset review area
+- `timeline`: `TimelinePanel`
+- `source_capture_plans`: `TimelinePanel`의 scene 근처 planning card / JSON export
+- `asset_source_candidates`: `AssetCandidateRegister` / JSON export
+- safety review fields: `SafetyReviewPanel`
+
+## Source Capture Plan
+
+`frontend/web`은 `source_brief`와 현재 scene 정보를 바탕으로 scene별 Source Capture Plan을 rule-based로 생성합니다.
+
+필드:
+
+- `scene_id`
+- `primary_asset_plan`
+- `capture_target`
+- `fallback_asset_plan`
+- `backup_asset_plan`
+- `ai_image_needed`
+- `source_review_note`
+
+이 기능은 실제 캡처가 아니라 캡처/대체/검토 계획입니다. 외부 URL을 자동으로 읽거나, 캡처하거나, 이미지를 생성하지 않습니다.
 
 ## JSON Export
 
@@ -179,13 +193,12 @@ source-first 입력이 있으면 브라우저 상태와 JSON 다운로드에 `so
 {
   "generation_result": {},
   "source_brief": {},
+  "source_capture_plans": [],
   "asset_source_candidates": []
 }
 ```
 
 `source_brief`는 source-first 입력이 있을 때만 포함됩니다. `asset_source_candidates`는 후보가 없으면 빈 배열일 수 있습니다.
-
-`generation_result.timeline.scenes[]`에는 `beats`와 `asset_review_checklist`가 항상 배열로 포함되도록 frontend에서 normalize합니다.
 
 ## 참고 채널 기준
 
@@ -199,26 +212,7 @@ source-first 입력이 있으면 브라우저 상태와 JSON 다운로드에 `so
 
 - 이슈털이
 
-참고 가능한 것은 빠른 이슈 해설형 쇼츠의 일반 제작 문법입니다.
-
-- 첫 1초 hook
-- 빠른 TTS 기반 진행
-- 커뮤니티/뉴스/자료화면 중심 구성
-- 짧은 scene 단위 컷 전환
-- 큰 자막/강조 자막 리듬
-- 반응, 쟁점, 맥락 전환, 결론, 댓글 유도 구조
-- 자료화면과 설명 자막의 조합
-- 썸네일의 명확한 이슈 전달 방식
-
-복제 금지:
-
-- 특정 채널의 대본 문장
-- 썸네일 디자인
-- TTS 목소리/말투
-- 편집 템포와 컷 구성
-- 로고, 캡처, 이미지, 댓글 원문 무단 사용
-
-참고 채널을 그대로 따라 하지 않고 이슈털이용 원본 포맷으로 재구성합니다.
+참고 가능한 것은 빠른 이슈 해설형 쇼츠의 일반 제작 문법입니다. 특정 채널의 대본 문장, 썸네일 디자인, TTS 목소리/말투, 편집 템포/컷 구성, 로고, 캡처, 이미지, 댓글 원문은 복제하지 않습니다.
 
 ## 아직 미구현
 

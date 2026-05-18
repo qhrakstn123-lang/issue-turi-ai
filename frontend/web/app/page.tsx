@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { JsonDownloadButton } from "../components/JsonDownloadButton";
 import { ProjectForm } from "../components/ProjectForm";
 import { ResultSummary } from "../components/ResultSummary";
 import { SafetyReviewPanel } from "../components/SafetyReviewPanel";
 import { SceneCard } from "../components/SceneCard";
+import { SourceSummaryCard } from "../components/SourceSummaryCard";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { createProject, generateShortsPlan } from "../lib/api";
 import { applySourceTypeSafetyPreset, buildSafeAssetCandidateDraft } from "../lib/assetCandidateSafety";
 import { normalizeGenerationResult } from "../lib/normalize";
+import { buildSourceCapturePlans } from "../lib/sourceCapturePlan";
 import type { AssetSourceCandidate, GenerationResult, ProjectPayload, Scene, SourceBrief, TimelineScene } from "../lib/types";
 import type { SceneEditablePatch } from "../components/SceneEditor";
 
@@ -26,12 +29,14 @@ const menuItems = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [originalResult, setOriginalResult] = useState<GenerationResult | null>(null);
   const [sourceBrief, setSourceBrief] = useState<SourceBrief | null>(null);
   const [assetSourceCandidates, setAssetSourceCandidates] = useState<AssetSourceCandidate[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [projectFormKey, setProjectFormKey] = useState(0);
 
   async function handleGenerate(payload: ProjectPayload) {
     setIsGenerating(true);
@@ -80,6 +85,17 @@ export default function HomePage() {
     );
   }
 
+  function handleNewProject() {
+    setResult(null);
+    setOriginalResult(null);
+    setSourceBrief(null);
+    setAssetSourceCandidates([]);
+    setError(null);
+    setIsGenerating(false);
+    setProjectFormKey((current) => current + 1);
+    router.replace("/");
+  }
+
   function onUpdateScene(sceneId: string, updates: SceneEditablePatch) {
     setResult((current) => {
       if (!current) {
@@ -113,6 +129,8 @@ export default function HomePage() {
     const originalScene = originalResult?.storyboard.scenes.find((candidate) => candidate.scene_id === scene.scene_id);
     return originalScene ? isEditableSceneChanged(scene, originalScene) : false;
   }
+
+  const sourceCapturePlans = result ? buildSourceCapturePlans(result.storyboard.scenes, sourceBrief) : [];
 
   return (
     <main className="app-shell">
@@ -149,13 +167,14 @@ export default function HomePage() {
             <kbd>K</kbd>
           </div>
           <div className="topbar-actions">
-            <button className="ghost-button" type="button" disabled>
+            <button className="ghost-button" type="button" onClick={handleNewProject}>
               새 프로젝트
             </button>
             <JsonDownloadButton
               result={result}
               assetSourceCandidates={assetSourceCandidates}
               sourceBrief={sourceBrief}
+              sourceCapturePlans={sourceCapturePlans}
             />
             <span className={result && result.safety_status !== "approved" ? "status-pill warn" : "status-pill muted"}>
               {result?.safety_status || "검토 전"}
@@ -178,7 +197,7 @@ export default function HomePage() {
         </section>
 
         <section className="workspace">
-          <ProjectForm isGenerating={isGenerating} onSubmit={handleGenerate} />
+          <ProjectForm key={projectFormKey} isGenerating={isGenerating} onSubmit={handleGenerate} />
 
           <section className="result-panel">
             <div className="panel-heading">
@@ -206,6 +225,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <aside className="review-column">
+                    <SourceSummaryCard sourceBrief={sourceBrief} />
                     <TimelinePanel
                       result={result}
                       assetSourceCandidates={assetSourceCandidates}
@@ -213,6 +233,7 @@ export default function HomePage() {
                       onUpdateAssetCandidate={onUpdateAssetCandidate}
                       onDeleteAssetCandidate={onDeleteAssetCandidate}
                       sourceBrief={sourceBrief}
+                      sourceCapturePlans={sourceCapturePlans}
                     />
                     <SafetyReviewPanel result={result} />
                     <div className="placeholder-card">
@@ -237,23 +258,12 @@ export default function HomePage() {
 }
 
 function buildSourceAwareProjectPayload(payload: ProjectPayload): ProjectPayload {
-  if (!payload.source_brief) {
-    return payload;
-  }
-  const sourceBrief = payload.source_brief;
-  const sourceContext = [
-    sourceBrief.source_title ? `소스 제목: ${sourceBrief.source_title}` : "",
-    sourceBrief.source_context ? `소스 맥락: ${sourceBrief.source_context}` : "",
-    sourceBrief.source_angle ? `쇼츠 관점: ${sourceBrief.source_angle}` : "",
-    sourceBrief.source_url ? `사용자 제공 원본 링크: ${sourceBrief.source_url}` : "",
-    "외부 URL 내용은 자동으로 읽지 않았고, 사용자가 제공한 소스 맥락만 반영한다.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-  return {
-    ...payload,
-    topic: `${payload.topic}\n\n[소스 기반 기획]\n${sourceContext}`,
-  };
+  return stripSourceBriefForGeneration(payload);
+}
+
+function stripSourceBriefForGeneration(payload: ProjectPayload): ProjectPayload {
+  const { source_brief: _sourceBrief, ...generationPayload } = payload;
+  return generationPayload;
 }
 
 function createInitialSourceCandidate(sourceBrief: SourceBrief, result: GenerationResult): AssetSourceCandidate {

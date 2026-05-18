@@ -23,6 +23,8 @@ class NextFrontendTests(unittest.TestCase):
             "SourcingSection",
             "EditingSection",
             "TimelinePanel",
+            "SourceCapturePlanList",
+            "SourceSummaryCard",
             "AssetCandidateRegister",
             "JsonDownloadButton",
         ]
@@ -183,6 +185,83 @@ class NextFrontendTests(unittest.TestCase):
         self.assertIn("원본 소스 기반 캡처 후보", timeline)
         self.assertIn("sourceBrief={sourceBrief}", page)
         self.assertIn("source_brief: sourceBrief", download)
+
+    def test_source_first_brief_does_not_pollute_script_generation_payload(self):
+        page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")
+        summary = Path("frontend/web/components/SourceSummaryCard.tsx").read_text(encoding="utf-8")
+        download = Path("frontend/web/components/JsonDownloadButton.tsx").read_text(encoding="utf-8")
+
+        self.assertIn("buildSourceAwareProjectPayload", page)
+        self.assertIn("stripSourceBriefForGeneration", page)
+        self.assertIn("createProject(buildSourceAwareProjectPayload(payload))", page)
+        self.assertIn("sourceBrief={sourceBrief}", page)
+        self.assertIn("SourceSummaryCard", page)
+        self.assertIn("외부 URL은 자동으로 읽지 않았습니다", summary)
+        self.assertIn("source_title", summary)
+        self.assertIn("source_context", summary)
+        self.assertIn("source_angle", summary)
+        self.assertIn("source_url", summary)
+        self.assertIn("source_brief: sourceBrief", download)
+        helper_body = page.split("function buildSourceAwareProjectPayload", 1)[1]
+        self.assertNotIn("[소스 기반 기획]", helper_body)
+        self.assertNotIn("source_context ? `소스 맥락", helper_body)
+        self.assertNotIn("source_url ? `사용자 제공 원본 링크", helper_body)
+        self.assertNotIn("외부 URL 내용은 자동으로 읽지 않았고", helper_body)
+
+    def test_source_capture_plan_is_rule_based_frontend_state_and_exported(self):
+        page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")
+        timeline = Path("frontend/web/components/TimelinePanel.tsx").read_text(encoding="utf-8")
+        capture_component = Path("frontend/web/components/SourceCapturePlanList.tsx").read_text(encoding="utf-8")
+        capture_builder = Path("frontend/web/lib/sourceCapturePlan.ts").read_text(encoding="utf-8")
+        download = Path("frontend/web/components/JsonDownloadButton.tsx").read_text(encoding="utf-8")
+        types = Path("frontend/web/lib/types.ts").read_text(encoding="utf-8")
+
+        self.assertIn("SourceCapturePlan", types)
+        self.assertIn("source_capture_plans: SourceCapturePlan[]", types)
+        self.assertIn("buildSourceCapturePlans", capture_builder)
+        self.assertIn("sourceCapturePlans", page)
+        self.assertIn("buildSourceCapturePlans(result.storyboard.scenes, sourceBrief)", page)
+        self.assertIn("sourceCapturePlans={sourceCapturePlans}", page)
+        self.assertIn("SourceCapturePlanList", timeline)
+        self.assertIn("source_capture_plans: sourceCapturePlans", download)
+        self.assertIn("asset_source_candidates: assetSourceCandidates", download)
+        self.assertIn("primary_asset_plan", capture_component)
+        self.assertIn("capture_target", capture_component)
+        self.assertIn("fallback_asset_plan", capture_component)
+        self.assertIn("ai_image_needed", capture_component)
+        self.assertIn("source_review_note", capture_component)
+        self.assertIn("source-capture-plan-card", capture_component)
+        self.assertIn("source_capture", capture_component)
+        self.assertIn("mockup_rewrite", capture_component)
+        self.assertIn("community", capture_builder)
+        self.assertIn("instagram", capture_builder)
+        self.assertIn('"source_capture"', capture_builder)
+        self.assertIn('fallback_asset_plan: "mockup_rewrite"', capture_builder)
+        self.assertIn("닉네임, 프로필 이미지, 댓글 원문, 개인정보", capture_builder)
+        self.assertIn("명예훼손 위험", capture_builder)
+        self.assertIn("google_image", capture_builder)
+        self.assertIn("원본 출처와 라이선스 확인 전까지 사용 후보", capture_builder)
+        self.assertNotIn("fetch(", capture_builder)
+
+    def test_new_project_button_resets_frontend_state_and_url(self):
+        page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")
+        download = Path("frontend/web/components/JsonDownloadButton.tsx").read_text(encoding="utf-8")
+
+        self.assertIn("useRouter", page)
+        self.assertIn("handleNewProject", page)
+        self.assertIn("새 프로젝트", page)
+        self.assertIn("onClick={handleNewProject}", page)
+        self.assertIn("setResult(null)", page)
+        self.assertIn("setOriginalResult(null)", page)
+        self.assertIn("setSourceBrief(null)", page)
+        self.assertIn("setAssetSourceCandidates([])", page)
+        self.assertIn("setError(null)", page)
+        self.assertIn("setIsGenerating(false)", page)
+        self.assertIn("setProjectFormKey", page)
+        self.assertIn('router.replace("/")', page)
+        self.assertIn("key={projectFormKey}", page)
+        self.assertIn("if (!result)", download)
+        self.assertIn("return null", download)
 
     def test_next_frontend_supports_frontend_only_scene_editing(self):
         page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")

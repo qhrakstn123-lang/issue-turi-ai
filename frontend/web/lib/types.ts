@@ -152,9 +152,43 @@ export type SourceBrief = {
   source_angle: string;
 };
 
+export type PrimaryAssetPlan =
+  | "source_capture"
+  | "mockup_rewrite"
+  | "licensed_stock"
+  | "user_provided"
+  | "ai_generated_background"
+  | "text_card";
+
+export type FallbackAssetPlan =
+  | "mockup_rewrite"
+  | "licensed_stock"
+  | "user_provided"
+  | "ai_generated_background"
+  | "text_card"
+  | "avoid";
+
+export type BackupAssetPlan =
+  | "licensed_stock"
+  | "google_image_reference"
+  | "ai_generated_background"
+  | "text_card"
+  | "user_provided";
+
+export type SourceCapturePlan = {
+  scene_id: string;
+  primary_asset_plan: PrimaryAssetPlan;
+  capture_target: string;
+  fallback_asset_plan: FallbackAssetPlan;
+  backup_asset_plan: BackupAssetPlan;
+  ai_image_needed: boolean;
+  source_review_note: string;
+};
+
 export type AssetSourceExportPayload = {
   generation_result: GenerationResult;
   source_brief?: SourceBrief;
+  source_capture_plans: SourceCapturePlan[];
   asset_source_candidates: AssetSourceCandidate[];
 };
 

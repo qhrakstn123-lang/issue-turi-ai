@@ -21,7 +21,15 @@ source input
 
 AI images are not the default visual strategy. They are a support option for background shots, replacement cuts, explanatory visuals, or scenes where the original source is insufficient, risky, or unavailable.
 
-## Reference And Operating Channels
+Before implementing Source Capture Plan or source-first UI changes, also read:
+
+- `docs/UI_DESIGN_GUIDE.md`
+- `docs/FRONTEND_BACKEND_CONTRACT.md`
+- `.agents/skills/shortsflow-ui-designer/SKILL.md`
+
+Source-first UI changes must confirm the frontend display location and JSON export shape together.
+
+## 2. Reference And Operating Channels
 
 Reference channels:
 
@@ -37,7 +45,7 @@ These reference channels are only general production-grammar references for fast
 
 Do not copy reference-channel script sentences, thumbnail design, TTS voice or speech style, edit tempo/cut structure, logos, captures, images, or original comments. ShortsFlow should reconstruct an original 이슈털이 format from source material and safe review rules.
 
-## 2. Source-First Input
+## 3. Source-First Input
 
 Topic-only input remains supported because it is useful for quick ideation and fake-mode tests.
 
@@ -50,11 +58,11 @@ The preferred product direction is source-first input:
 - `source_context`
 - `source_angle`
 
-`source_context` is text provided by the user. It can be a summary, copied excerpt, or manually written context. ShortsFlow should not automatically fetch, crawl, scrape, download, or capture external URLs.
+`source_context` is text provided by the user. It can be a summary, copied excerpt, or manually written context. ShortsFlow should not automatically fetch, crawl, scrape, download, search, screenshot, or capture external URLs.
 
 `source_angle` describes why the source matters for the video, such as "reaction split", "policy controversy", "unexpected context", "creator response", or "public safety concern".
 
-## 3. Visual Source Priority
+## 4. Visual Source Priority
 
 Visual planning should use this priority order:
 
@@ -66,7 +74,7 @@ Visual planning should use this priority order:
 
 The system should never treat a URL, screenshot, or Google image as automatically usable. It should produce planning and review data so a human can decide what is safe to use.
 
-## 4. Source Type Rules
+## 5. Source Type Rules
 
 ### community / instagram
 
@@ -100,7 +108,7 @@ Check real-person confusion, brand or character similarity, false factual implic
 
 AI-generated images should support the story, not replace source verification.
 
-## 5. Scene Planning Concepts
+## 6. Scene Planning Concepts
 
 Future scene planning can include:
 
@@ -113,7 +121,7 @@ Future scene planning can include:
 
 These concepts should guide planning before media generation or rendering. They do not imply automatic capture, crawling, download, image generation, TTS, or MP4 rendering.
 
-## 6. Current Implementation Connection
+## 7. Current Implementation Connection
 
 Already implemented:
 
@@ -142,7 +150,7 @@ Not implemented:
 - MP4 rendering
 - DB persistence
 
-## 7. Next Feature Order
+## 8. Next Feature Order
 
 Recommended next feature order:
 
@@ -154,9 +162,9 @@ Recommended next feature order:
 6. DB persistence
 7. Image/TTS/MP4 renderer
 
-## 8. What Not To Do
+## 9. What Not To Do
 
-- Do not copy reference-channel scripts, thumbnails, branding, or unique editing structure.
+- Do not copy reference-channel scripts, thumbnails, branding, TTS voice/speech style, edit tempo/cut structure, or unique presentation.
 - Do not automatically crawl, scrape, capture, or download external sites.
 - Do not treat Google images as usable assets without license review.
 - Do not approve captured source use without rights, privacy, and defamation review.

@@ -1,15 +1,27 @@
 "use client";
 
-import type { AssetSourceCandidate, AssetSourceExportPayload, GenerationResult, SourceBrief } from "../lib/types";
+import type {
+  AssetSourceCandidate,
+  AssetSourceExportPayload,
+  GenerationResult,
+  SourceBrief,
+  SourceCapturePlan,
+} from "../lib/types";
 import { normalizeGenerationResult } from "../lib/normalize";
 
 type JsonDownloadButtonProps = {
   result: GenerationResult | null;
   assetSourceCandidates?: AssetSourceCandidate[];
   sourceBrief?: SourceBrief | null;
+  sourceCapturePlans?: SourceCapturePlan[];
 };
 
-export function JsonDownloadButton({ result, assetSourceCandidates = [], sourceBrief = null }: JsonDownloadButtonProps) {
+export function JsonDownloadButton({
+  result,
+  assetSourceCandidates = [],
+  sourceBrief = null,
+  sourceCapturePlans = [],
+}: JsonDownloadButtonProps) {
   function handleDownload() {
     if (!result) {
       return;
@@ -17,6 +29,7 @@ export function JsonDownloadButton({ result, assetSourceCandidates = [], sourceB
     const exportPayload: AssetSourceExportPayload = {
       generation_result: normalizeGenerationResult(result),
       ...(sourceBrief ? { source_brief: sourceBrief } : {}),
+      source_capture_plans: sourceCapturePlans,
       asset_source_candidates: assetSourceCandidates,
     };
     const json = JSON.stringify(exportPayload, null, 2);

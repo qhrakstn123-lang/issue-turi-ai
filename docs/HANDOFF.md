@@ -36,7 +36,9 @@ Recently added:
 - The ProjectForm now supports optional source-first fields: `source_url`, `source_type`, `source_title`, `source_context`, and `source_angle`.
 - Source-first input is frontend/API-payload metadata only. It does not fetch, crawl, scrape, download, or screenshot URLs.
 - Source-first input is exported as `source_brief` and can seed one unapproved initial `asset_source_candidate` with safety defaults.
-- JSON download now exports `{ "generation_result": ..., "source_brief": ..., "asset_source_candidates": [...] }` when source-first input is present. The candidates are browser state only and are not persisted to the backend or a database.
+- Source Capture Plan is now generated in `frontend/web` as rule-based planning data from `source_brief` and scenes.
+- Source Capture Plan is displayed compactly near each TimelinePanel scene and exported as `source_capture_plans`.
+- JSON download now exports `{ "generation_result": ..., "source_brief": ..., "source_capture_plans": [...], "asset_source_candidates": [...] }` when source-first input is present. The candidates and capture plans are browser state only and are not persisted to the backend or a database.
 
 ## Must Read First
 
@@ -45,9 +47,12 @@ Read these before making changes:
 - `AGENTS.md`
 - `.agents/skills/issue-turi-shorts-generation/SKILL.md`
 - `.agents/skills/shortsflow-production-grammar/SKILL.md`
+- `.agents/skills/shortsflow-ui-designer/SKILL.md`
 - `README.md`
 - `docs/HANDOFF.md`
 - `docs/SOURCE_FIRST_WORKFLOW.md`
+- `docs/UI_DESIGN_GUIDE.md`
+- `docs/FRONTEND_BACKEND_CONTRACT.md`
 - `docs/current-project-state.md`
 - `docs/TECH_STACK.md`
 - `docs/TROUBLESHOOTING.md`
@@ -105,6 +110,8 @@ The Next.js app uses same-origin `/api/...` calls by default. The browser should
 
 - `docs/current-project-state.md`: beginner-friendly summary of what currently runs and what the web page does.
 - `docs/SOURCE_FIRST_WORKFLOW.md`: source-capture-first product direction, source type rules, visual source priority, and next feature order.
+- `docs/UI_DESIGN_GUIDE.md`: ShortsFlow UI principles, source-capture-first design rules, and component-level guidance for `frontend/web`.
+- `docs/FRONTEND_BACKEND_CONTRACT.md`: field mapping from backend/API and frontend-only state to `frontend/web` components and JSON export.
 - `docs/RUNNING.md`: local backend, static frontend, and Next.js frontend running guide.
 - `docs/TECH_STACK.md`: technical stack, architecture, pipeline, provider modes, test/smoke commands, and excluded features.
 - `docs/TROUBLESHOOTING.md`: dated issue records with symptoms, causes, fixes, verification, and prevention notes.
@@ -164,16 +171,19 @@ Important tests:
 
 ## Recommended Next Step
 
-Recommended next step: add Source Capture Plan.
+Recommended next step: add Manual Screenshot / Capture Asset Upload.
 
 Reason:
 - The product direction is now source-capture-first rather than AI-image-first.
 - Topic-only input remains useful, and the source URL/type/title/context/angle entry point now exists.
 - Manual Asset Register and Manual Scene Edit already support local review and correction.
-- Source Capture Plan can now use source-first context to structure scene-level capture, mockup, fallback, and review notes.
+- Source Capture Plan now structures scene-level capture, mockup, fallback, and review notes.
 
 Concrete next slice:
-- Add scene-level source capture planning fields.
+- Let users manually register prepared screenshot/capture assets against the existing plans.
+- Before UI implementation, read `docs/UI_DESIGN_GUIDE.md` and `docs/FRONTEND_BACKEND_CONTRACT.md`.
+- Follow `.agents/skills/shortsflow-ui-designer/SKILL.md` for `frontend/web` UI work.
+- For source-first UI changes, check backend contract and JSON export shape together.
 - Do not fetch, crawl, scrape, download, or capture URLs automatically.
 - Keep source context user-provided.
 - Do not change `frontend/app`.

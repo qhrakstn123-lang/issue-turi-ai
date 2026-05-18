@@ -8,8 +8,12 @@ description: Use when defining ShortsFlow production grammar, source-first plann
 Before planning or changing production workflow features, read:
 
 - `docs/SOURCE_FIRST_WORKFLOW.md`
+- `docs/UI_DESIGN_GUIDE.md`
+- `docs/FRONTEND_BACKEND_CONTRACT.md`
 - `docs/HANDOFF.md`
 - `docs/TECH_STACK.md`
+
+For frontend UI work, also use `.agents/skills/shortsflow-ui-designer/SKILL.md`.
 
 ## Product Direction
 
@@ -30,7 +34,7 @@ source_angle
 -> export
 ```
 
-`source_context` is user-provided text. Do not automatically fetch, crawl, scrape, download, or capture external URLs.
+`source_context` is user-provided text. Do not automatically fetch, crawl, scrape, download, search, screenshot, or capture external URLs.
 
 ## Visual Source Priority
 
@@ -68,7 +72,8 @@ Do not copy reference-channel script sentences, thumbnail designs, TTS voice or 
 
 ## Guardrails
 
-- Do not copy reference-channel dialogue, thumbnails, branding, or unique editing structure.
+- Do not copy reference-channel dialogue, thumbnails, branding, TTS voice/speech style, edit tempo/cut structure, or unique presentation.
 - Do not treat Google images as usable without license review.
-- Do not approve captures without rights, privacy, and defamation review.
+- Do not approve captures without rights, privacy, portrait-right, and defamation review.
 - Do not add external API calls, crawling, downloading, DB persistence, image generation, TTS, or MP4 rendering unless the user explicitly scopes that work.
+- Source-first UI changes must check backend/frontend contract and JSON export shape together.

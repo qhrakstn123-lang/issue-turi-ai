@@ -4,9 +4,20 @@
 
 ShortsFlow is a source-capture-first AI Shorts Planning Studio. A creator can still enter a topic, target audience, tone, style, and desired length, but the preferred product direction is to plan shorts from original sources such as community links, news, YouTube, broadcast material, Instagram, Google image references, stock sites, and user-provided material.
 
-Read [docs/SOURCE_FIRST_WORKFLOW.md](SOURCE_FIRST_WORKFLOW.md) before planning the next feature slice.
+Read these before planning the next frontend/source-first feature slice:
+
+- [docs/SOURCE_FIRST_WORKFLOW.md](SOURCE_FIRST_WORKFLOW.md)
+- [docs/UI_DESIGN_GUIDE.md](UI_DESIGN_GUIDE.md)
+- [docs/FRONTEND_BACKEND_CONTRACT.md](FRONTEND_BACKEND_CONTRACT.md)
+- `.agents/skills/shortsflow-ui-designer/SKILL.md`
 
 AI images are not the default visual strategy. They are support assets for background shots, replacement cuts, or scenes where original source material is insufficient, risky, or unavailable.
+
+Reference channels are 강석주, 뇌전구, and 얘봐라. The upload channel is 이슈털이. These channels are references only for general fast issue-explainer production grammar such as first-second hooks, large subtitle rhythm, source-screen pacing, and reaction-to-context structure.
+
+ShortsFlow must not copy reference-channel script sentences, thumbnails, TTS voice or speech style, edit tempo/cut structure, logos, captures, images, or original comments. The output should be rebuilt as an original 이슈털이 format.
+
+## Current Output
 
 Current output includes:
 
@@ -21,7 +32,10 @@ Current output includes:
 - timeline data
 - production beats
 - scene-level asset review checklist
+- frontend-only source brief
 - frontend-only manual asset source candidates
+- frontend-only manual scene edits
+- JSON export
 
 Preferred source-first inputs:
 
@@ -31,11 +45,7 @@ Preferred source-first inputs:
 - `source_context`
 - `source_angle`
 
-ShortsFlow must not automatically fetch, crawl, download, or capture external URLs.
-
-Reference channels are 강석주, 뇌전구, and 얘봐라. The upload channel is 이슈털이. These channels are references only for general fast issue-explainer production grammar such as first-second hooks, large subtitle rhythm, source-screen pacing, and reaction-to-context structure.
-
-ShortsFlow must not copy reference-channel script sentences, thumbnails, TTS voice or speech style, edit tempo/cut structure, logos, captures, images, or original comments. The output should be rebuilt as an original 이슈털이 format.
+ShortsFlow must not automatically fetch, crawl, download, search, screenshot, or capture external URLs.
 
 ## Current Status
 
@@ -52,27 +62,29 @@ Completed:
 - Next.js + React + TypeScript primary UI in `frontend/web`
 - legacy static UI retained in `frontend/app`
 - same-origin Next.js `/api/...` proxy to Python backend
-- JSON export with `generation_result` and `asset_source_candidates`
-- manual real smoke command
-- automated fake-mode tests
+- JSON export with `generation_result`, optional `source_brief`, and `asset_source_candidates`
 - Source-first Project Form in `frontend/web`
-- optional `source_brief` JSON export
 - source-first initial `asset_source_candidate` creation with safety defaults
+- rule-based frontend-only Source Capture Plan
+- Manual Scene Edit
+- Manual Asset Register
+- automated fake-mode tests
 
 Not implemented:
 
 - database persistence
 - project reopen/list from DB
+- automatic crawling/capture/download
+- Google image automatic search/download
 - real image generation
 - TTS generation
+- thumbnail generation
 - asset storage
 - MP4 rendering
 - login
 - payment
 - deployment
 - upload automation
-- automatic crawling/capture/download
-- thumbnail generation
 
 ## Frontend Direction
 
@@ -92,6 +104,13 @@ http://127.0.0.1:8000
 ```
 
 `frontend/app` is a legacy 안내/호환 page. It should remain available, but new UI features should be built in `frontend/web`.
+
+Before `frontend/web` UI work:
+
+- read `docs/UI_DESIGN_GUIDE.md`
+- read `docs/FRONTEND_BACKEND_CONTRACT.md`
+- follow `.agents/skills/shortsflow-ui-designer/SKILL.md`
+- confirm source-first UI changes against JSON export structure
 
 ## Provider Direction
 
@@ -144,14 +163,19 @@ Scope:
 
 Goal: structure how each scene should use source captures, mockups, licensed/user-provided assets, Google image references, and AI-generated support visuals.
 
-Candidate fields:
+Status: first frontend-only rule-based slice implemented.
 
+Implemented fields:
+
+- `scene_id`
 - `primary_asset_plan`
 - `capture_target`
 - `fallback_asset_plan`
 - `backup_asset_plan`
 - `ai_image_needed`
 - `source_review_note`
+
+This is planning/review data only. It does not crawl, capture, download, generate images, create TTS, render MP4, or persist to DB.
 
 ### Phase 3: Manual Screenshot / Capture Asset Upload
 
@@ -182,19 +206,11 @@ Candidate fields:
 
 Goal: preserve projects and edited planning results.
 
-Candidate implementation:
-
-- SQLite repository
-- project list
-- project detail reopen
-- scene edit save
-- exported JSON from saved state
-
 ### Phase 8: Asset and Media Providers
 
-Goal: generate and store real production assets.
+Goal: generate and store real production assets after planning/edit/review contracts are stable.
 
-Deferred until planning/edit/review contracts are stable:
+Deferred:
 
 - image provider
 - TTS provider
@@ -210,6 +226,7 @@ Do not include in the current MVP slice:
 - copyrighted broadcast clips without rights
 - automatic scraping of risky media
 - automatic URL crawling/capture/download
+- automatic Google image search/download
 - AI-image-first visual planning
 - payment
 - team collaboration

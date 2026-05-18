@@ -107,6 +107,7 @@ Current components:
 - `SourcingSection`
 - `EditingSection`
 - `TimelinePanel`
+- `SourceCapturePlanList`
 - `AssetCandidateRegister`
 - `JsonDownloadButton`
 
@@ -116,6 +117,8 @@ Current source-first frontend state:
 - Topic-only generation still works.
 - Source URLs are not fetched, crawled, downloaded, searched, or screenshotted.
 - Source-first metadata is exported as `source_brief` when present.
+- Source Capture Plan is generated in frontend state from `source_brief` and scenes.
+- Source Capture Plan is exported as `source_capture_plans`.
 - Source URL/type can seed one unapproved frontend-only `asset_source_candidate` using safety defaults.
 - Source-first context can be reflected in the generated planning request by user-provided text, not by reading the external URL.
 
@@ -235,9 +238,37 @@ JSON download exports:
 ```json
 {
   "generation_result": {},
+  "source_brief": {},
+  "source_capture_plans": [],
   "asset_source_candidates": []
 }
 ```
+
+## Source Capture Plan
+
+`frontend/web` includes a rule-based Source Capture Plan.
+
+Scope:
+
+- Frontend only
+- Generated from `source_brief` and `generation_result.storyboard.scenes`
+- Displayed near each scene in `TimelinePanel`
+- Exported as `source_capture_plans`
+- No backend API changes
+- No URL fetch/crawl/download/screenshot
+- No image generation, TTS, MP4 rendering, or DB persistence
+
+Plan fields:
+
+- `scene_id`
+- `primary_asset_plan`
+- `capture_target`
+- `fallback_asset_plan`
+- `backup_asset_plan`
+- `ai_image_needed`
+- `source_review_note`
+
+This is planning/review data only. It does not mean capture is approved or already performed.
 
 ## Manual Edit / Scene 수정 UI
 
@@ -369,9 +400,9 @@ npm run build
 
 Recommended sequence:
 
-1. Source Capture Plan
-   - Add scene-level primary capture, mockup/rewrite, fallback/backup asset, and source review fields.
-   - Keep it as planning/review data.
+1. Manual Screenshot / Capture Asset Upload
+   - Let users manually register prepared screenshot/capture assets against Source Capture Plan.
+   - Keep upload/register flow manual; do not crawl or capture URLs automatically.
 
 2. Publishing Readiness
    - Add originality, reused-content, monetization, source-rights, and human-check planning fields.

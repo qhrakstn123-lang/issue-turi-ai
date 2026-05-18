@@ -2,6 +2,61 @@
 
 ## 2026-05-18
 
+### Source Capture Plan
+
+`frontend/web`에 rule-based Source Capture Plan을 추가했습니다. backend domain/application/pipeline, API 구조, `frontend/app`, 외부 API 호출, 자동 캡처, 이미지/TTS/MP4/DB 기능은 변경하지 않았습니다.
+
+추가된 동작:
+
+- `source_brief`와 `generation_result.storyboard.scenes`를 바탕으로 scene별 `source_capture_plans` 생성
+- community/instagram 소스는 hook/context/reaction scene에서 `source_capture`를 우선 계획하고 `mockup_rewrite` fallback 적용
+- community/instagram review note에 닉네임, 프로필 이미지, 댓글 원문, 개인정보, 명예훼손 위험 확인 문구 포함
+- news/youtube/broadcast 소스는 캡처 권리, 로고, 출처, 허가 필요 여부 확인 note 적용
+- google_image 소스는 원본 출처와 라이선스 확인 전까지 사용 후보일 뿐이라는 note 적용
+- TimelinePanel의 scene 근처에 compact Source Capture Plan card 표시
+- JSON export에 `source_capture_plans` 배열 추가
+
+변경 파일:
+
+- `frontend/web/lib/types.ts`
+- `frontend/web/lib/sourceCapturePlan.ts`
+- `frontend/web/components/SourceCapturePlanList.tsx`
+- `frontend/web/components/TimelinePanel.tsx`
+- `frontend/web/components/JsonDownloadButton.tsx`
+- `frontend/web/app/page.tsx`
+- `frontend/web/app/globals.css`
+- `tests/test_next_frontend.py`
+- `docs/HANDOFF.md`
+- `docs/current-project-state.md`
+- `docs/product-plan.md`
+- `docs/TECH_STACK.md`
+- `docs/FRONTEND_BACKEND_CONTRACT.md`
+- `docs/DEVELOPMENT_LOG.md`
+
+제외한 것:
+
+- URL fetch/crawl/download/screenshot
+- Google 이미지 자동 검색/캡처
+- 이미지 생성
+- TTS
+- MP4 렌더링
+- DB 저장
+
+검증 결과:
+
+```text
+uv run --project . --with pytest pytest -q: 107 passed, 40 subtests passed
+npm.cmd run typecheck: succeeded
+npm.cmd run lint: no warnings or errors
+npm.cmd run build: succeeded
+```
+
+다음 추천 작업:
+
+Manual Screenshot / Capture Asset Upload를 추가해 사용자가 직접 준비한 자료를 Source Capture Plan과 연결합니다.
+
+## 2026-05-18
+
 ### Source-first Project Form
 
 `frontend/web`의 ProjectForm에 source-first 입력을 추가했습니다. 기존 topic-only 생성은 유지하고, 사용자가 원하면 source URL/type/title/context/angle을 함께 넣어 source-capture-first 기획 흐름으로 시작할 수 있습니다.
