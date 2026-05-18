@@ -1,19 +1,22 @@
 "use client";
 
-import type { AssetSourceCandidate, AssetSourceExportPayload, GenerationResult } from "../lib/types";
+import type { AssetSourceCandidate, AssetSourceExportPayload, GenerationResult, SourceBrief } from "../lib/types";
+import { normalizeGenerationResult } from "../lib/normalize";
 
 type JsonDownloadButtonProps = {
   result: GenerationResult | null;
   assetSourceCandidates?: AssetSourceCandidate[];
+  sourceBrief?: SourceBrief | null;
 };
 
-export function JsonDownloadButton({ result, assetSourceCandidates = [] }: JsonDownloadButtonProps) {
+export function JsonDownloadButton({ result, assetSourceCandidates = [], sourceBrief = null }: JsonDownloadButtonProps) {
   function handleDownload() {
     if (!result) {
       return;
     }
     const exportPayload: AssetSourceExportPayload = {
-      generation_result: result,
+      generation_result: normalizeGenerationResult(result),
+      ...(sourceBrief ? { source_brief: sourceBrief } : {}),
       asset_source_candidates: assetSourceCandidates,
     };
     const json = JSON.stringify(exportPayload, null, 2);

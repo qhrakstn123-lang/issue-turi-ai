@@ -22,6 +22,8 @@ Served by the Python backend at http://127.0.0.1:8000
 
 `frontend/app` is kept as a legacy 안내/호환 page. Do not add new UI features there. Future UI work should target `frontend/web`.
 
+Product direction: ShortsFlow is source-capture-first, not AI-image-first. AI images are support/background/replacement cuts, not the default visual plan.
+
 ## Runtime Topology
 
 Recommended local development flow:
@@ -107,6 +109,15 @@ Current components:
 - `TimelinePanel`
 - `AssetCandidateRegister`
 - `JsonDownloadButton`
+
+Current source-first frontend state:
+
+- `ProjectForm` supports optional `source_url`, `source_type`, `source_title`, `source_context`, and `source_angle`.
+- Topic-only generation still works.
+- Source URLs are not fetched, crawled, downloaded, searched, or screenshotted.
+- Source-first metadata is exported as `source_brief` when present.
+- Source URL/type can seed one unapproved frontend-only `asset_source_candidate` using safety defaults.
+- Source-first context can be reflected in the generated planning request by user-provided text, not by reading the external URL.
 
 ### `frontend/app`
 
@@ -228,6 +239,39 @@ JSON download exports:
 }
 ```
 
+## Manual Edit / Scene 수정 UI
+
+`frontend/web` includes a compact frontend-only scene editor inside each `SceneCard`.
+
+Editable fields:
+
+- `narration`
+- `tts_text`
+- `subtitle`
+- `emphasis_caption`
+- `estimated_duration`
+- `visual_description`
+- `generated_image_prompt`
+- `asset_usage_note`
+- `editing_notes`
+
+Scope:
+
+- Frontend state only
+- No backend PATCH call
+- No DB persistence
+- No changes to backend domain/application/pipeline
+- No changes to `frontend/app`
+
+Behavior:
+
+- Edited scenes show an `Edited` badge.
+- Each scene can be reverted to the generated original with `원본으로 되돌리기`.
+- Edited values update the visible scene card.
+- Edited `estimated_duration` rebuilds frontend timeline timing and summary duration.
+- JSON download keeps the existing payload shape and includes the edited `generation_result` plus `asset_source_candidates`.
+- Edits are lost on refresh because persistence is not implemented yet.
+
 ## Visual Sourcing
 
 `RealVisualAssetSuggestionAgent` is a visual sourcing strategy recommender, not just an image prompt generator.
@@ -245,6 +289,8 @@ Key fields:
 - `asset_usage_note`
 
 Capture is not categorically banned. The system classifies whether material should be direct-capture candidate, mockup, license-required, permission-required, user-provided, or avoided. Final rights review remains human.
+
+Reference channels are 강석주, 뇌전구, and 얘봐라. The upload channel is 이슈털이. They are references only for general fast issue-explainer production grammar. Do not copy scripts, thumbnails, TTS voice/speech style, edit tempo/cut structure, logos, captures, images, or original comments.
 
 ## Safety Review
 
@@ -323,10 +369,9 @@ npm run build
 
 Recommended sequence:
 
-1. Manual Edit / Scene 수정 UI
-   - Let users correct generated planning data before deeper pipeline features.
-   - Keep it in `frontend/web`.
-   - Avoid backend persistence unless explicitly scoped.
+1. Source Capture Plan
+   - Add scene-level primary capture, mockup/rewrite, fallback/backup asset, and source review fields.
+   - Keep it as planning/review data.
 
 2. Publishing Readiness
    - Add originality, reused-content, monetization, source-rights, and human-check planning fields.

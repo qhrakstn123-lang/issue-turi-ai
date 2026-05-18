@@ -8,7 +8,10 @@ import { SafetyReviewPanel } from "../components/SafetyReviewPanel";
 import { SceneCard } from "../components/SceneCard";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { createProject, generateShortsPlan } from "../lib/api";
-import type { AssetSourceCandidate, GenerationResult, ProjectPayload } from "../lib/types";
+import { applySourceTypeSafetyPreset, buildSafeAssetCandidateDraft } from "../lib/assetCandidateSafety";
+import { normalizeGenerationResult } from "../lib/normalize";
+import type { AssetSourceCandidate, GenerationResult, ProjectPayload, Scene, SourceBrief, TimelineScene } from "../lib/types";
+import type { SceneEditablePatch } from "../components/SceneEditor";
 
 const menuItems = [
   "홈",
@@ -24,6 +27,8 @@ const menuItems = [
 
 export default function HomePage() {
   const [result, setResult] = useState<GenerationResult | null>(null);
+  const [originalResult, setOriginalResult] = useState<GenerationResult | null>(null);
+  const [sourceBrief, setSourceBrief] = useState<SourceBrief | null>(null);
   const [assetSourceCandidates, setAssetSourceCandidates] = useState<AssetSourceCandidate[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,11 +37,18 @@ export default function HomePage() {
     setIsGenerating(true);
     setError(null);
     setResult(null);
+    setOriginalResult(null);
+    setSourceBrief(payload.source_brief ?? null);
     setAssetSourceCandidates([]);
     try {
-      const created = await createProject(payload);
+      const created = await createProject(buildSourceAwareProjectPayload(payload));
       const generated = await generateShortsPlan(created.project.project_id);
-      setResult(generated.result);
+      const normalizedResult = normalizeGenerationResult(generated.result);
+      setResult(normalizedResult);
+      setOriginalResult(normalizedResult);
+      if (payload.source_brief) {
+        setAssetSourceCandidates([createInitialSourceCandidate(payload.source_brief, normalizedResult)]);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "요청에 실패했습니다.");
     } finally {
@@ -66,6 +78,40 @@ export default function HomePage() {
     setAssetSourceCandidates((current) =>
       current.filter((candidate) => candidate.asset_candidate_id !== assetCandidateId),
     );
+  }
+
+  function onUpdateScene(sceneId: string, updates: SceneEditablePatch) {
+    setResult((current) => {
+      if (!current) {
+        return current;
+      }
+      const scenes = current.storyboard.scenes.map((scene) =>
+        scene.scene_id === sceneId ? { ...scene, ...updates } : scene,
+      );
+      return rebuildResultWithScenes(current, scenes);
+    });
+  }
+
+  function onResetScene(sceneId: string) {
+    if (!originalResult) {
+      return;
+    }
+    const originalScene = originalResult.storyboard.scenes.find((scene) => scene.scene_id === sceneId);
+    if (!originalScene) {
+      return;
+    }
+    setResult((current) => {
+      if (!current) {
+        return current;
+      }
+      const scenes = current.storyboard.scenes.map((scene) => (scene.scene_id === sceneId ? originalScene : scene));
+      return rebuildResultWithScenes(current, scenes);
+    });
+  }
+
+  function isSceneEdited(scene: Scene) {
+    const originalScene = originalResult?.storyboard.scenes.find((candidate) => candidate.scene_id === scene.scene_id);
+    return originalScene ? isEditableSceneChanged(scene, originalScene) : false;
   }
 
   return (
@@ -106,7 +152,11 @@ export default function HomePage() {
             <button className="ghost-button" type="button" disabled>
               새 프로젝트
             </button>
-            <JsonDownloadButton result={result} assetSourceCandidates={assetSourceCandidates} />
+            <JsonDownloadButton
+              result={result}
+              assetSourceCandidates={assetSourceCandidates}
+              sourceBrief={sourceBrief}
+            />
             <span className={result && result.safety_status !== "approved" ? "status-pill warn" : "status-pill muted"}>
               {result?.safety_status || "검토 전"}
             </span>
@@ -118,6 +168,7 @@ export default function HomePage() {
             <span className="eyebrow">ShortsFlow</span>
             <h1>AI 쇼츠 기획 스튜디오</h1>
             <p>더 잘 기획하고, 더 빠르게 만들고, 더 크게 성장하세요.</p>
+            {sourceBrief ? <span className="source-first-badge">소스 기반 기획</span> : null}
           </div>
           <div className="hero-orbit" aria-hidden="true">
             <span />
@@ -145,7 +196,13 @@ export default function HomePage() {
                 <div className="editor-grid">
                   <div className="scene-list">
                     {result.storyboard.scenes.map((scene) => (
-                      <SceneCard key={scene.scene_id} scene={scene} />
+                      <SceneCard
+                        key={scene.scene_id}
+                        scene={scene}
+                        isEdited={isSceneEdited(scene)}
+                        onChangeScene={onUpdateScene}
+                        onResetScene={onResetScene}
+                      />
                     ))}
                   </div>
                   <aside className="review-column">
@@ -155,6 +212,7 @@ export default function HomePage() {
                       onAddAssetCandidate={onAddAssetCandidate}
                       onUpdateAssetCandidate={onUpdateAssetCandidate}
                       onDeleteAssetCandidate={onDeleteAssetCandidate}
+                      sourceBrief={sourceBrief}
                     />
                     <SafetyReviewPanel result={result} />
                     <div className="placeholder-card">
@@ -176,6 +234,192 @@ export default function HomePage() {
       </section>
     </main>
   );
+}
+
+function buildSourceAwareProjectPayload(payload: ProjectPayload): ProjectPayload {
+  if (!payload.source_brief) {
+    return payload;
+  }
+  const sourceBrief = payload.source_brief;
+  const sourceContext = [
+    sourceBrief.source_title ? `소스 제목: ${sourceBrief.source_title}` : "",
+    sourceBrief.source_context ? `소스 맥락: ${sourceBrief.source_context}` : "",
+    sourceBrief.source_angle ? `쇼츠 관점: ${sourceBrief.source_angle}` : "",
+    sourceBrief.source_url ? `사용자 제공 원본 링크: ${sourceBrief.source_url}` : "",
+    "외부 URL 내용은 자동으로 읽지 않았고, 사용자가 제공한 소스 맥락만 반영한다.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return {
+    ...payload,
+    topic: `${payload.topic}\n\n[소스 기반 기획]\n${sourceContext}`,
+  };
+}
+
+function createInitialSourceCandidate(sourceBrief: SourceBrief, result: GenerationResult): AssetSourceCandidate {
+  const sceneId = result.storyboard.scenes[0]?.scene_id || "scene_001";
+  const safetyState = applySourceTypeSafetyPreset(
+    {
+      source_type: sourceBrief.source_type,
+      license_status: "unchecked",
+      needs_blur: false,
+      needs_rewrite: false,
+      approved_for_use: false,
+      review_notes: sourceBrief.source_context || "",
+    },
+    sourceBrief.source_type,
+  );
+  return {
+    ...buildSafeAssetCandidateDraft({
+      scene_id: sceneId,
+      asset_candidate_id: createAssetCandidateId(),
+      source_type: safetyState.source_type,
+      source_url: sourceBrief.source_url,
+      source_title: sourceBrief.source_title || `${sceneId} 원본 소스 기반 캡처 후보`,
+      usage_mode: "source_first_manual_review",
+      license_status: safetyState.license_status,
+      needs_blur: safetyState.needs_blur,
+      needs_rewrite: safetyState.needs_rewrite,
+      approved_for_use: false,
+      review_notes: safetyState.review_notes,
+    }),
+  };
+}
+
+function rebuildResultWithScenes(result: GenerationResult, scenes: Scene[]): GenerationResult {
+  return {
+    ...result,
+    storyboard: {
+      ...result.storyboard,
+      scenes,
+    },
+    timeline: rebuildTimelineForScenes(result, scenes),
+  };
+}
+
+function rebuildTimelineForScenes(result: GenerationResult, scenes: Scene[]) {
+  let cursor = 0;
+  const timelineScenes = scenes.map((scene) => {
+    const previousTimelineScene = result.timeline.scenes.find((candidate) => candidate.scene_id === scene.scene_id);
+    const duration = scene.estimated_duration > 0 ? scene.estimated_duration : 1;
+    const startTime = cursor;
+    const endTime = startTime + duration;
+    cursor = endTime;
+    return rebuildTimelineScene(previousTimelineScene, scene, startTime, endTime, duration);
+  });
+
+  return {
+    ...result.timeline,
+    total_duration: cursor,
+    scenes: timelineScenes,
+  };
+}
+
+function rebuildTimelineScene(
+  previousTimelineScene: TimelineScene | undefined,
+  scene: Scene,
+  startTime: number,
+  endTime: number,
+  duration: number,
+): TimelineScene {
+  const fallbackScene: TimelineScene = {
+    scene_id: scene.scene_id,
+    start_time: startTime,
+    end_time: endTime,
+    duration,
+    visual_asset: {
+      type: scene.visual_asset_type,
+      url: scene.generated_image_url,
+    },
+    narration_audio: {
+      url: null,
+    },
+    subtitle: {
+      text: scene.subtitle,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    emphasis_caption: {
+      text: scene.emphasis_caption,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    motion: scene.motion_direction,
+    transition: scene.transition,
+    sound_effect: {
+      type: scene.sound_effect_hint,
+      start_time: startTime,
+    },
+    beats: [],
+    asset_review_checklist: [],
+  };
+
+  const source = previousTimelineScene ?? fallbackScene;
+  const sourceBeats = source.beats ?? [];
+  const previousDuration = source.duration > 0 ? source.duration : duration;
+
+  return {
+    ...source,
+    scene_id: scene.scene_id,
+    start_time: startTime,
+    end_time: endTime,
+    duration,
+    visual_asset: {
+      ...source.visual_asset,
+      type: scene.visual_asset_type,
+      url: scene.generated_image_url,
+    },
+    subtitle: {
+      ...source.subtitle,
+      text: scene.subtitle,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    emphasis_caption: {
+      ...source.emphasis_caption,
+      text: scene.emphasis_caption,
+      start_time: startTime,
+      end_time: Math.min(endTime, startTime + Math.max(1, duration * 0.45)),
+    },
+    motion: scene.motion_direction,
+    transition: scene.transition,
+    sound_effect: {
+      ...source.sound_effect,
+      type: scene.sound_effect_hint,
+      start_time: startTime,
+    },
+    beats: sourceBeats.map((beat) => {
+      const relativeStart = (beat.start_time - source.start_time) / previousDuration;
+      const relativeEnd = (beat.end_time - source.start_time) / previousDuration;
+      return {
+        ...beat,
+        start_time: startTime + clampRatio(relativeStart) * duration,
+        end_time: startTime + clampRatio(relativeEnd) * duration,
+      };
+    }),
+    asset_review_checklist: source.asset_review_checklist ?? [],
+  };
+}
+
+function isEditableSceneChanged(scene: Scene, originalScene: Scene) {
+  return (
+    scene.narration !== originalScene.narration ||
+    scene.tts_text !== originalScene.tts_text ||
+    scene.subtitle !== originalScene.subtitle ||
+    scene.emphasis_caption !== originalScene.emphasis_caption ||
+    scene.estimated_duration !== originalScene.estimated_duration ||
+    scene.visual_description !== originalScene.visual_description ||
+    scene.generated_image_prompt !== originalScene.generated_image_prompt ||
+    scene.asset_usage_note !== originalScene.asset_usage_note ||
+    scene.editing_notes !== originalScene.editing_notes
+  );
+}
+
+function clampRatio(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.min(1, Math.max(0, value));
 }
 
 function createAssetCandidateId() {

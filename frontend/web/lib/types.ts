@@ -9,6 +9,7 @@ export type ProjectPayload = {
   style_template_id: string;
   video_length_seconds: number;
   output_format: OutputFormat;
+  source_brief?: SourceBrief;
 };
 
 export type Project = ProjectPayload & {
@@ -143,8 +144,17 @@ export type AssetSourceCandidate = {
   review_notes: string;
 };
 
+export type SourceBrief = {
+  source_url: string;
+  source_type: AssetSourceType;
+  source_title: string;
+  source_context: string;
+  source_angle: string;
+};
+
 export type AssetSourceExportPayload = {
   generation_result: GenerationResult;
+  source_brief?: SourceBrief;
   asset_source_candidates: AssetSourceCandidate[];
 };
 

@@ -1,45 +1,5 @@
 # Frontend and Backend Running Guide
 
-## 2026-05-15 Update: use `localhost:3000` as the main app URL
-
-개발 중 사용자가 확인할 주소는 이제 `http://localhost:3000` 하나로 생각하면 됩니다.
-
-```text
-Browser
--> http://localhost:3000
--> Next.js /api proxy
--> internal Python backend at http://127.0.0.1:8000
-```
-
-중요:
-
-- 브라우저에서 직접 확인하는 화면은 `http://localhost:3000`입니다.
-- Next.js frontend는 `/api/...`를 같은 origin인 `localhost:3000`으로 호출합니다.
-- Next.js route handler가 내부적으로 Python backend `127.0.0.1:8000`에 전달합니다.
-- 따라서 CORS 문제를 피할 수 있고, 사용자는 `8000` 화면을 직접 볼 필요가 없습니다.
-- 단, 현재 개발 구조상 Python backend process는 뒤에서 여전히 켜져 있어야 합니다.
-
-추천 실행:
-
-터미널 1:
-
-```powershell
-uv run --project . python -m backend.src.presentation.http.server
-```
-
-터미널 2:
-
-```powershell
-cd frontend/web
-npm run dev
-```
-
-브라우저:
-
-```text
-http://localhost:3000
-```
-
 이 문서는 `issue-turi-ai`를 처음 보는 사람이 로컬에서 백엔드와 프런트엔드를 실행하는 방법을 정리합니다.
 
 현재 실행 방식은 두 가지입니다.
@@ -88,32 +48,28 @@ npm run dev
 Next.js 프런트엔드 주소:
 
 ```text
-http://localhost:3000
+http://127.0.0.1:3000
 ```
 
-Next.js가 3000 포트를 사용할 수 없어 다른 포트를 표시하면, 터미널에 출력된 실제 dev port를 사용합니다.
-
-`frontend/web`는 기본적으로 same-origin `/api/...`를 호출합니다. Next.js route handler가 내부적으로 `http://127.0.0.1:8000` 백엔드 API에 전달합니다.
+`frontend/web`는 기본적으로 `http://127.0.0.1:8000` 백엔드 API를 호출합니다.
 
 백엔드 주소를 바꾸고 싶으면 Next.js 실행 전에 설정합니다.
 
 ```powershell
 cd frontend/web
-$env:BACKEND_API_BASE_URL="http://127.0.0.1:8000"
+$env:NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
 npm run dev
 ```
 
-## Legacy Static Frontend
+## Static MVP Frontend
 
-`frontend/app`은 legacy 안내/호환 페이지입니다. 백엔드 서버 하나가 API와 정적 HTML/CSS/JS 프런트엔드를 같이 제공합니다.
-
-신규 UI 기능은 `frontend/app`에 추가하지 않고 `frontend/web`에서 작업합니다.
+가장 단순한 실행 방식입니다. 백엔드 서버 하나가 API와 정적 HTML/CSS/JS 프런트엔드를 같이 제공합니다.
 
 ```powershell
 uv run --project . python -m backend.src.presentation.http.server
 ```
 
-legacy 페이지를 브라우저에서 엽니다.
+브라우저에서 엽니다.
 
 ```text
 http://127.0.0.1:8000

@@ -100,6 +100,10 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(len(generate_payload["result"]["storyboard"]["scenes"]), 8)
         self.assertEqual(generate_payload["result"]["timeline"]["aspect_ratio"], "9:16")
         self.assertEqual(generate_payload["result"]["timeline"]["scenes"][0]["start_time"], 0.0)
+        self.assertIn("beats", generate_payload["result"]["timeline"]["scenes"][0])
+        self.assertIn("asset_review_checklist", generate_payload["result"]["timeline"]["scenes"][0])
+        self.assertIsInstance(generate_payload["result"]["timeline"]["scenes"][0]["beats"], list)
+        self.assertIsInstance(generate_payload["result"]["timeline"]["scenes"][0]["asset_review_checklist"], list)
         self.assertEqual(
             patch_payload["project"]["generation_result"]["storyboard"]["scenes"][0]["subtitle"],
             "반응 갈린 안내문",

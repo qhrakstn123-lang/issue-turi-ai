@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import type { ProjectPayload } from "../lib/types";
+import type { AssetSourceType, ProjectPayload, SourceBrief } from "../lib/types";
 
 type ProjectFormProps = {
   isGenerating: boolean;
@@ -12,6 +12,7 @@ export function ProjectForm({ isGenerating, onSubmit }: ProjectFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const sourceBrief = buildSourceBrief(formData);
     onSubmit({
       topic: String(formData.get("topic") || "").trim(),
       target_audience: String(formData.get("target_audience") || "").trim(),
@@ -19,6 +20,7 @@ export function ProjectForm({ isGenerating, onSubmit }: ProjectFormProps) {
       style_template_id: String(formData.get("style_template_id") || "issue_turi_basic"),
       video_length_seconds: Number(formData.get("video_length_seconds") || 50),
       output_format: "youtube_shorts",
+      ...(sourceBrief ? { source_brief: sourceBrief } : {}),
     });
   }
 
@@ -62,9 +64,71 @@ export function ProjectForm({ isGenerating, onSubmit }: ProjectFormProps) {
         </label>
       </div>
 
+      <details className="source-first-section">
+        <summary>
+          <span>소스 기반 쇼츠 만들기</span>
+          <em>선택</em>
+        </summary>
+        <p>URL을 자동으로 읽지 않습니다. 사용자가 제공한 링크와 맥락만 기획 참고 자료로 저장합니다.</p>
+
+        <label>
+          원본 링크
+          <input name="source_url" placeholder="https://..." />
+        </label>
+
+        <div className="field-grid">
+          <label>
+            소스 유형
+            <select name="source_type" defaultValue="community">
+              <option value="community">community</option>
+              <option value="news">news</option>
+              <option value="youtube">youtube</option>
+              <option value="broadcast">broadcast</option>
+              <option value="instagram">instagram</option>
+              <option value="google_image">google_image</option>
+              <option value="stock_site">stock_site</option>
+              <option value="user_provided">user_provided</option>
+              <option value="mockup">mockup</option>
+              <option value="ai_generated">ai_generated</option>
+            </select>
+          </label>
+          <label>
+            소스 제목
+            <input name="source_title" placeholder="자료 제목 또는 게시글 제목" />
+          </label>
+        </div>
+
+        <label>
+          소스 요약/맥락
+          <textarea name="source_context" rows={3} placeholder="직접 요약하거나 필요한 맥락을 붙여넣으세요." />
+        </label>
+
+        <label>
+          쇼츠 관점
+          <input name="source_angle" placeholder="반응 갈림, 쟁점, 맥락 전환, 댓글 유도 등" />
+        </label>
+      </details>
+
       <button type="submit" disabled={isGenerating}>
         {isGenerating ? "생성 중..." : "AI 기획 생성"}
       </button>
     </form>
   );
+}
+
+function buildSourceBrief(formData: FormData): SourceBrief | null {
+  const source_url = String(formData.get("source_url") || "").trim();
+  const source_title = String(formData.get("source_title") || "").trim();
+  const source_context = String(formData.get("source_context") || "").trim();
+  const source_angle = String(formData.get("source_angle") || "").trim();
+  if (!source_url && !source_title && !source_context && !source_angle) {
+    return null;
+  }
+  return {
+    source_url,
+    source_type: String(formData.get("source_type") || "community") as AssetSourceType,
+    source_title,
+    source_context,
+    source_angle,
+  };
 }

@@ -7,6 +7,8 @@ description: Use when working on Issue Turi YouTube Shorts scripts, storyboards,
 
 Use this skill to keep the Issue Turi Shorts workflow consistent when generating or modifying scripts, scenes, subtitles, visual asset suggestions, editing directions, safety review notes, real agent prompts, or pipeline tests.
 
+Before planning the next feature slice, read `docs/SOURCE_FIRST_WORKFLOW.md`. ShortsFlow is now source-capture-first, not AI-image-first.
+
 ## Current Pipeline
 
 The current real mixed pipeline order is fixed:
@@ -48,38 +50,53 @@ Default mode remains fake. Real agents are used only when `ISSUE_TURI_LLM_PROVID
 - `frontend/app` is a legacy static 안내/호환 page. Do not add new UI product features there unless explicitly requested.
 - Browser work should target `http://localhost:3000` or the actual Next.js dev port.
 - `http://127.0.0.1:8000` is the Python backend API server and legacy static page host.
+- Source-first input lives in `frontend/web` state and export metadata; URLs are not fetched, crawled, downloaded, or captured.
 
 ## Reference Channel Rules
 
 Reference channels:
 
-- 뇌전구: https://www.youtube.com/@%EB%87%8C%EC%A0%84%EA%B5%AC
-- 걱석주: https://www.youtube.com/@%EA%B1%8D%EC%84%9D%EC%A3%BC
+- 강석주
+- 뇌전구
+- 얘봐라
 
 Operating channel:
 
-- 이슈털이: https://www.youtube.com/@issueyo
+- 이슈털이
 
 Use reference channels only for general production grammar:
 
-- hook style
-- subtitle rhythm
-- cut pacing
-- motion style
-- sound cue timing
+- first-second hook
+- fast TTS-based progression
+- community/news/source-screen-centered composition
+- short scene-level cuts
+- large subtitle and emphasis-caption rhythm
+- reaction -> issue -> context shift -> conclusion -> comment prompt structure
+- pairing source screens with explanatory captions
+- clear issue-forward thumbnail communication
 
-Do not copy exact scripts, captions, thumbnails, branding, unique expressions, downloaded clips, broadcast footage, or channel-specific presentation.
+Do not copy exact scripts, captions, thumbnail design, TTS voice or speech style, edit tempo/cut structure, branding, unique expressions, logos, captures, images, original comments, downloaded clips, broadcast footage, or channel-specific presentation. Rebuild the output as an original 이슈털이 format.
 
 ## Visual Asset Rules
 
 Do not assume every scene needs an AI-generated image. Suggest the best safe visual form per scene:
 
+- source captures
 - reference capture candidates
 - community-capture-style mockups
 - licensed stock images or clips
+- user-provided material
 - reaction stickers
 - text cards
-- AI image prompts
+- AI image prompts only as support/background/replacement cuts
+
+Visual source priority:
+
+1. `source_capture`
+2. `mockup_rewrite`
+3. `licensed_stock` or `user_provided`
+4. `google_image_reference` as a license-review candidate
+5. `ai_generated` as a support/background/replacement cut
 
 Capture is not categorically banned, but the agent must classify the sourcing plan for each scene:
 
@@ -90,7 +107,7 @@ Capture is not categorically banned, but the agent must classify the sourcing pl
 
 Google image material should usually be `license_required`. YouTube, broadcast, and news captures should usually be `permission_required` or `mockup_recommended`. Community and Instagram captures must call out privacy, usernames, profile images, original comment text, and defamation risk. User-owned or user-provided assets may be classified as `user_provided`.
 
-Do not generate, search, download, or capture real image files in this workflow. The visual agent recommends a sourcing strategy only; final safety and rights review still belongs to safety/review steps.
+Do not generate, search, download, crawl, scrape, or capture real image files in this workflow. The visual agent recommends a sourcing strategy only; final safety and rights review still belongs to safety/review steps.
 
 ## Testing
 

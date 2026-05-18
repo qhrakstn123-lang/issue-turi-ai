@@ -30,7 +30,13 @@ Recently added:
 - The Next.js app now uses same-origin `/api/...` routes on `localhost:3000`; those route handlers proxy to the internal Python backend at `127.0.0.1:8000`.
 - Timeline scenes now include rule-based production beats and an asset review checklist.
 - The Next.js timeline now includes a frontend-only Manual Asset Register. Users can add, edit, approve, and delete scene-level `asset_source_candidates` beside the asset review checklist.
-- JSON download now exports `{ "generation_result": ..., "asset_source_candidates": [...] }`. The candidates are browser state only and are not persisted to the backend or a database.
+- The Next.js scene cards now include a compact frontend-only Manual Edit UI. Users can edit narration, TTS text, subtitles, emphasis captions, estimated duration, visual description, generated-image prompt, asset usage note, and editing notes.
+- Edited scenes show an `Edited` badge and can be reverted scene-by-scene to the generated original.
+- Edited scene values update the current browser state, timeline duration/timing, summary duration, and JSON export payload.
+- The ProjectForm now supports optional source-first fields: `source_url`, `source_type`, `source_title`, `source_context`, and `source_angle`.
+- Source-first input is frontend/API-payload metadata only. It does not fetch, crawl, scrape, download, or screenshot URLs.
+- Source-first input is exported as `source_brief` and can seed one unapproved initial `asset_source_candidate` with safety defaults.
+- JSON download now exports `{ "generation_result": ..., "source_brief": ..., "asset_source_candidates": [...] }` when source-first input is present. The candidates are browser state only and are not persisted to the backend or a database.
 
 ## Must Read First
 
@@ -38,8 +44,10 @@ Read these before making changes:
 
 - `AGENTS.md`
 - `.agents/skills/issue-turi-shorts-generation/SKILL.md`
+- `.agents/skills/shortsflow-production-grammar/SKILL.md`
 - `README.md`
 - `docs/HANDOFF.md`
+- `docs/SOURCE_FIRST_WORKFLOW.md`
 - `docs/current-project-state.md`
 - `docs/TECH_STACK.md`
 - `docs/TROUBLESHOOTING.md`
@@ -96,6 +104,7 @@ The Next.js app uses same-origin `/api/...` calls by default. The browser should
 ## Project Documentation
 
 - `docs/current-project-state.md`: beginner-friendly summary of what currently runs and what the web page does.
+- `docs/SOURCE_FIRST_WORKFLOW.md`: source-capture-first product direction, source type rules, visual source priority, and next feature order.
 - `docs/RUNNING.md`: local backend, static frontend, and Next.js frontend running guide.
 - `docs/TECH_STACK.md`: technical stack, architecture, pipeline, provider modes, test/smoke commands, and excluded features.
 - `docs/TROUBLESHOOTING.md`: dated issue records with symptoms, causes, fixes, verification, and prevention notes.
@@ -155,24 +164,20 @@ Important tests:
 
 ## Recommended Next Step
 
-Recommended next step: implement Manual Edit / Scene 수정 UI first, then Publishing Readiness.
+Recommended next step: add Source Capture Plan.
 
 Reason:
-- The project already produces rich scene-level planning data.
-- Timeline now includes scene timing, production beats, and asset review checklist data.
-- Manual editing lets users correct generated text, captions, sourcing notes, and timeline-facing scene data before persistence or media generation.
-- Publishing readiness can then turn the edited plan into a practical pre-upload safety/originality checklist.
-- DB persistence is useful, but storing data before the editable planning contract is stable may create migration churn.
+- The product direction is now source-capture-first rather than AI-image-first.
+- Topic-only input remains useful, and the source URL/type/title/context/angle entry point now exists.
+- Manual Asset Register and Manual Scene Edit already support local review and correction.
+- Source Capture Plan can now use source-first context to structure scene-level capture, mockup, fallback, and review notes.
 
 Concrete next slice:
-- Add `frontend/web` scene editing controls for safe editable fields.
-- Keep edits local or export-only unless persistence is explicitly scoped.
+- Add scene-level source capture planning fields.
+- Do not fetch, crawl, scrape, download, or capture URLs automatically.
+- Keep source context user-provided.
 - Do not change `frontend/app`.
 - Do not add image generation, TTS, or MP4 rendering yet.
-
-Next slice after that:
-- Add publishing readiness fields such as originality risk, reused-content risk, monetization risk, and required human checks.
-- Keep it as planning data only; do not add image generation, TTS, or MP4 rendering yet.
 
 Alternative next step: DB persistence with SQLite if the immediate need is to preserve generated projects and edited scenes between browser sessions.
 

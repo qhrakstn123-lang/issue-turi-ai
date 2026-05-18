@@ -329,6 +329,14 @@ kbd {
   justify-content: space-between;
 }
 
+.scene-meta-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .field-grid,
 .summary-grid,
 .scene-list,
@@ -336,7 +344,8 @@ kbd {
 .scene-card,
 .field-list,
 .editor-grid,
-.review-column {
+.review-column,
+.source-first-section {
   display: grid;
   gap: 12px;
 }
@@ -367,7 +376,8 @@ kbd {
 .review-flag,
 .scene-tags span,
 .keyword,
-.scene-meta span {
+.scene-meta span,
+.edited-badge {
   background: rgba(15, 23, 42, 0.78);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -376,6 +386,13 @@ kbd {
   font-weight: 900;
   padding: 6px 9px;
   white-space: nowrap;
+}
+
+.edited-badge {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: rgba(94, 234, 212, 0.42);
+  color: #99f6e4;
+  text-transform: uppercase;
 }
 
 .status-pill.muted {
@@ -387,6 +404,46 @@ kbd {
   background: rgba(245, 158, 11, 0.16);
   border-color: rgba(245, 158, 11, 0.42);
   color: #fbbf24;
+}
+
+.source-first-badge {
+  background: rgba(20, 184, 166, 0.16);
+  border: 1px solid rgba(94, 234, 212, 0.38);
+  border-radius: 999px;
+  color: #99f6e4;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 12px;
+  padding: 6px 10px;
+}
+
+.source-first-section {
+  background: rgba(7, 10, 18, 0.36);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.source-first-section summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-weight: 900;
+  justify-content: space-between;
+}
+
+.source-first-section summary em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.source-first-section p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .safety-warn {
@@ -413,6 +470,29 @@ kbd {
   font-size: 12px;
   font-weight: 850;
   padding: 5px 8px;
+}
+
+.source-capture-direction {
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(94, 234, 212, 0.24);
+  border-left: 3px solid #2dd4bf;
+  border-radius: 12px;
+  color: #ccfbf1;
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+  padding: 10px 12px;
+}
+
+.source-capture-direction strong {
+  color: #99f6e4;
+  font-size: 12px;
+}
+
+.source-capture-direction span {
+  color: #dbeafe;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .timeline-list {
@@ -586,6 +666,84 @@ kbd {
   word-break: break-word;
 }
 
+.scene-edit-details {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.scene-edit-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.scene-editor {
+  background: rgba(7, 10, 18, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.scene-editor-heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.scene-editor-heading div {
+  display: grid;
+  gap: 2px;
+}
+
+.scene-editor-heading strong {
+  color: #e0f2fe;
+  font-size: 13px;
+}
+
+.scene-editor-heading span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.editor-field-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.scene-editor label {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 850;
+  gap: 6px;
+}
+
+.scene-editor input,
+.scene-editor textarea,
+.scene-editor-prompt textarea {
+  background: rgba(15, 23, 42, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font: inherit;
+  line-height: 1.5;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.scene-editor textarea,
+.scene-editor-prompt textarea {
+  resize: vertical;
+}
+
+.scene-editor-prompt textarea {
+  margin-top: 10px;
+}
+
 .asset-candidate-register {
   border-top: 1px solid var(--line);
   display: grid;
@@ -672,6 +830,18 @@ kbd {
   width: 13px;
 }
 
+.asset-risk-hint {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 10px;
+  color: #fcd34d;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.45;
+  margin: 0;
+  padding: 8px 10px;
+}
+
 .asset-candidate-list {
   display: grid;
   gap: 8px;
@@ -705,6 +875,7 @@ kbd {
 }
 
 .asset-candidate-badges .risk-badge,
+.asset-candidate-badges .risk-source-badge,
 .asset-candidate-badges .review-badge {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.38);
@@ -735,6 +906,10 @@ kbd {
 
 @media (min-width: 760px) {
   .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editor-field-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

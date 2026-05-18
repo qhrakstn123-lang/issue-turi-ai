@@ -1,5 +1,55 @@
 # Issue Turi AI Troubleshooting
 
+## 2026-05-15. Manual Edit 입력 시 `source.beats.map` runtime error
+
+### 증상
+
+`localhost:3001`에서 생성 결과를 만든 뒤 SceneCard의 `장면 수정`을 열고 자막 등을 입력하면 Next.js runtime error가 발생했다.
+
+```text
+TypeError: Cannot read properties of undefined (reading 'map')
+app/page.tsx
+source.beats.map(...)
+```
+
+### 원인
+
+Manual Edit가 scene을 수정할 때 `frontend/web/app/page.tsx`에서 frontend timeline을 다시 계산한다. 이때 기존 timeline scene에 `beats` 또는 `asset_review_checklist`가 항상 있다고 가정했다.
+
+하지만 legacy/fake/old result나 오래 떠 있던 backend/dev server가 만든 timeline object에는 해당 배열이 빠질 수 있다. 그 상태에서 `source.beats.map(...)`를 호출해 화면이 터졌다. 또한 이 shape를 그대로 JSON 다운로드하면 `generation_result.timeline.scenes[]`에 `beats`와 `asset_review_checklist`가 누락될 수 있었다.
+
+### 해결
+
+timeline rebuild 단계에서 optional 배열을 normalize한다.
+
+- `source.beats ?? []`
+- `source.asset_review_checklist ?? []`
+
+기존 beat가 있으면 timing만 재계산해 보존하고, 없으면 빈 배열을 넣는다. 생성 직후 result와 JSON export 직전에 `normalizeGenerationResult(...)`를 적용해 `generation_result.timeline.scenes[]`에도 `beats`와 `asset_review_checklist`가 undefined가 되지 않게 했다.
+
+### 검증 명령어
+
+```powershell
+uv run --project . --with pytest pytest -q
+cd frontend/web
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run build
+```
+
+### 결과
+
+```text
+104 passed, 39 subtests passed
+tsc --noEmit succeeded
+next lint: No ESLint warnings or errors
+next build succeeded
+```
+
+### 재발 방지
+
+frontend에서 backend result를 merge/rebuild할 때 새 필드가 항상 존재한다고 가정하지 않는다. timeline scene의 optional collection은 렌더링 전과 export 전 state rebuild 단계에서 빈 배열로 normalize한다.
+
 ## 2026-05-15. Browser should use port 3000 only
 
 ### 증상

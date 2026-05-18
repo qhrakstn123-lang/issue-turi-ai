@@ -1,5 +1,5 @@
 import { AssetCandidateRegister } from "./AssetCandidateRegister";
-import type { AssetSourceCandidate, GenerationResult } from "../lib/types";
+import type { AssetSourceCandidate, GenerationResult, SourceBrief } from "../lib/types";
 
 type TimelinePanelProps = {
   result: GenerationResult;
@@ -7,6 +7,7 @@ type TimelinePanelProps = {
   onAddAssetCandidate: (candidate: Omit<AssetSourceCandidate, "asset_candidate_id">) => void;
   onUpdateAssetCandidate: (assetCandidateId: string, updates: Partial<AssetSourceCandidate>) => void;
   onDeleteAssetCandidate: (assetCandidateId: string) => void;
+  sourceBrief?: SourceBrief | null;
 };
 
 function formatTime(seconds: number) {
@@ -19,6 +20,7 @@ export function TimelinePanel({
   onAddAssetCandidate,
   onUpdateAssetCandidate,
   onDeleteAssetCandidate,
+  sourceBrief = null,
 }: TimelinePanelProps) {
   const timeline = result.timeline;
 
@@ -37,6 +39,13 @@ export function TimelinePanel({
         <span>{timeline.resolution}</span>
         <span>{timeline.fps}fps</span>
       </div>
+
+      {sourceBrief ? (
+        <div className="source-capture-direction">
+          <strong>소스 기반 기획</strong>
+          <span>{sourceCaptureDirection(sourceBrief)}</span>
+        </div>
+      ) : null}
 
       <ol className="timeline-list">
         {timeline.scenes.map((scene) => {
@@ -108,4 +117,24 @@ export function TimelinePanel({
       </ol>
     </section>
   );
+}
+
+function sourceCaptureDirection(sourceBrief: SourceBrief) {
+  if (sourceBrief.source_type === "community" || sourceBrief.source_type === "instagram") {
+    return "원본 소스 기반 캡처 후보: blur/mockup/rewrite 우선 검토";
+  }
+  if (
+    sourceBrief.source_type === "news" ||
+    sourceBrief.source_type === "youtube" ||
+    sourceBrief.source_type === "broadcast"
+  ) {
+    return "원본 소스 기반 캡처 후보: permission_required 또는 mockup_recommended 우선 검토";
+  }
+  if (sourceBrief.source_type === "google_image") {
+    return "원본 소스 기반 캡처 후보: license_required reference로만 검토";
+  }
+  if (sourceBrief.source_type === "ai_generated") {
+    return "AI 이미지는 보조 컷/배경 컷으로만 검토";
+  }
+  return "원본 소스 기반 캡처 후보: 권리와 출처 확인 후 사용 검토";
 }
