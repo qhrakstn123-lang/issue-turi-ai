@@ -15,9 +15,13 @@ export function SourceCapturePlanList({ plans, sceneId }: SourceCapturePlanListP
     <div className="source-capture-plan-card">
       <div className="source-capture-plan-heading">
         <strong>Source Capture Plan</strong>
-        <span className={plan.primary_asset_plan === "source_capture" ? "capture-plan-badge strong" : "capture-plan-badge"}>
-          {plan.primary_asset_plan}
-        </span>
+        <div className="capture-plan-badges">
+          <span className="capture-plan-badge priority">원본 소스 우선</span>
+          <span className="capture-plan-badge">source-first priority</span>
+          <span className={plan.primary_asset_plan === "source_capture" ? "capture-plan-badge strong" : "capture-plan-badge"}>
+            {plan.primary_asset_plan}
+          </span>
+        </div>
       </div>
       <dl>
         <div>

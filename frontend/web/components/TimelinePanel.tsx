@@ -26,6 +26,11 @@ export function TimelinePanel({
   sourceCapturePlans = [],
 }: TimelinePanelProps) {
   const timeline = result.timeline;
+  const assetReviewStatus = assetSourceCandidates.length
+    ? assetSourceCandidates.every((candidate) => candidate.approved_for_use)
+      ? "사용 가능"
+      : "검토 필요"
+    : "후보 없음";
 
   return (
     <section className="timeline-panel" aria-label="제작 타임라인">
@@ -41,6 +46,13 @@ export function TimelinePanel({
         <span>{timeline.aspect_ratio}</span>
         <span>{timeline.resolution}</span>
         <span>{timeline.fps}fps</span>
+      </div>
+
+      <div className="review-status-split">
+        <span>대본 안전성: {result.safety_status}</span>
+        <span className={assetReviewStatus === "검토 필요" ? "review-needed" : undefined}>
+          자료 사용 상태: {assetReviewStatus}
+        </span>
       </div>
 
       {sourceBrief ? (

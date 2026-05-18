@@ -243,6 +243,24 @@ class NextFrontendTests(unittest.TestCase):
         self.assertIn("원본 출처와 라이선스 확인 전까지 사용 후보", capture_builder)
         self.assertNotIn("fetch(", capture_builder)
 
+    def test_source_first_visual_priority_and_asset_review_status_are_distinct(self):
+        timeline = Path("frontend/web/components/TimelinePanel.tsx").read_text(encoding="utf-8")
+        capture_component = Path("frontend/web/components/SourceCapturePlanList.tsx").read_text(encoding="utf-8")
+        sourcing = Path("frontend/web/components/SourcingSection.tsx").read_text(encoding="utf-8")
+
+        self.assertIn("대본 안전성", timeline)
+        self.assertIn("자료 사용 상태", timeline)
+        self.assertIn("assetReviewStatus", timeline)
+        self.assertIn("검토 필요", timeline)
+        self.assertIn("approved_for_use", timeline)
+        self.assertIn("원본 소스 우선", capture_component)
+        self.assertIn("source-first priority", capture_component)
+        self.assertIn("source_capture", capture_component)
+        self.assertIn("기본 시각 제안", sourcing)
+        self.assertIn("fallback suggestion", sourcing)
+        self.assertIn("visual_source_strategy", sourcing)
+        self.assertNotIn("Source Capture Plan보다 우선", sourcing)
+
     def test_new_project_button_resets_frontend_state_and_url(self):
         page = Path("frontend/web/app/page.tsx").read_text(encoding="utf-8")
         download = Path("frontend/web/components/JsonDownloadButton.tsx").read_text(encoding="utf-8")
